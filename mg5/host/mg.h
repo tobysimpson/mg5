@@ -12,11 +12,23 @@
 #include <math.h>
 #include "msh.h"
 
+
+//object
+struct dim_obj
+{
+    size_t    n[3];   //all
+    size_t    i[3];   //interior
+};
+
 //object
 struct lvl_obj
 {
-    struct msh_obj  msh;
+    cl_int3         le;
     
+    struct msh_obj  msh;
+    struct dim_obj  vtx;
+    struct dim_obj  ele;
+
     //memory
     cl_mem  uu;
     cl_mem  bb;
@@ -29,35 +41,40 @@ struct lvl_obj
 struct op_obj
 {
     //operator
+    cl_kernel       vtx_fwd;
     cl_kernel       vtx_jac;
     cl_kernel       vtx_res;
-
 };
 
 
 //object
 struct mg_obj
 {
-    //levels
-    int             nl;     //levels
+    //dims
+    cl_int3     le;     //log2 dims
+    cl_int      nl;     //levels
+    cl_float    dx;
+    cl_float    dt;
 
     //array
     struct lvl_obj *lvls;
     
     //kernels
-    cl_kernel       ele_geo;
     cl_kernel       vtx_geo;
     cl_kernel       vtx_prj;
     cl_kernel       vtx_itp;
     
     //ops
     struct op_obj ops[1];
+    
+    //offset
+    size_t off[3];
 };
 
 
 
 //init
-void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg, struct msh_obj *msh);
+void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg);
 void mg_fin(struct ocl_obj *ocl, struct mg_obj *mg);
 
 void mg_itp(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lf, struct lvl_obj *lc);

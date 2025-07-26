@@ -31,7 +31,7 @@ struct ocl_obj
     cl_context          context;
     cl_command_queue    command_queue;
     cl_program          program;
-    char                device_str[50];
+    char                device_str[1024];
     size_t              device_num[3];
     cl_event            event;
 };

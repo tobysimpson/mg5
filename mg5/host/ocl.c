@@ -23,8 +23,8 @@ void ocl_ini(struct ocl_obj *ocl)
     ocl->err            = clGetDeviceIDs(ocl->platform_id, CL_DEVICE_TYPE_GPU, 1, &ocl->device_id, &ocl->num_devices);              //devices
     ocl->context        = clCreateContext(NULL, ocl->num_devices, &ocl->device_id, NULL, NULL, &ocl->err);                          //context
     ocl->command_queue  = clCreateCommandQueue(ocl->context, ocl->device_id, 0, &ocl->err);                                         //command queue
-    ocl->err            = clGetDeviceInfo(ocl->device_id, CL_DEVICE_NAME, 50, &ocl->device_str[0], NULL);                           //device info
-    ocl->err            = clGetDeviceInfo(ocl->device_id, CL_PLATFORM_VERSION, 24, &ocl->device_num, NULL);                 //device info CL_DEVICE_MAX_MEM_ALLOC_SIZE, DEVICE_MAX_WORK_GROUP_SIZE
+    ocl->err            = clGetDeviceInfo(ocl->device_id, CL_DEVICE_NAME, 1024, &ocl->device_str[0], NULL);                           //device info
+    ocl->err            = clGetDeviceInfo(ocl->device_id, CL_DEVICE_IMAGE3D_MAX_HEIGHT, 24, &ocl->device_num, NULL);                 //device info CL_DEVICE_MAX_MEM_ALLOC_SIZE, DEVICE_MAX_WORK_GROUP_SIZE, CL_DEVICE_EXTENSIONS
 
     printf("%s\n", ocl->device_str);
     printf("%s\n", ocl->platform_str);
