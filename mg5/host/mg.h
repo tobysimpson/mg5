@@ -9,9 +9,19 @@
 #ifndef mg_h
 #define mg_h
 
+#include <stdio.h>
+#include <time.h>
 #include <math.h>
-#include "msh.h"
+#include "ocl.h"
 
+//object
+struct msh_obj
+{
+    cl_float        dt;
+    cl_float        dx;
+    cl_float        dx2;
+    cl_float        rdx2;
+};
 
 //object
 struct dim_obj

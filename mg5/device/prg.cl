@@ -100,12 +100,12 @@ kernel void vtx_ini(const struct msh_obj  msh,
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
 //    int4 dim = get_image_dim(uu);
     
-    float4 x = msh.dx*convert_float4(pos);
+//    float4 x = msh.dx*convert_float4(pos);
     
     write_imagef(gg, pos, 1.0f);
-    write_imagef(uu, pos, sin(x.x));
-    write_imagef(bb, pos, sin(x.x));
-    write_imagef(rr, pos, 0);
+    write_imagef(uu, pos, (pos.x==0));
+    write_imagef(bb, pos, 0.0f);
+    write_imagef(rr, pos, (pos.x==0)); //bounds here too
 
     return;
 }
@@ -134,31 +134,46 @@ kernel void vtx_geo(const       struct msh_obj  msh,
  ============================
  */
 
-//image test
-kernel void vtx_fwd(const struct msh_obj  msh,
+//jacobi
+kernel void vtx_jac(const struct msh_obj  msh,
+                    read_only     image3d_t       gg,
                     read_only     image3d_t       uu,
+                    read_only     image3d_t       bb,
                     write_only    image3d_t       rr)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
-//    int4 dim = get_image_dim(img1);
     
-    printf("%v4d\n", pos);
+    //read
+    float4 b = read_imagef(uu, pos);
+    float4 g = read_imagef(gg, pos);
     
-    //stencil
-    float4 ss[6];
-    mem_rgs6(uu, ss, pos);
-    
-    //sum
-    float s = 0e0f;
-    
-    for(int i=0; i<6; i++)
+    if(g.x>0.0f)
     {
-        s += ss[i].x;
+        //stencil
+        float4 gg6[6];
+        mem_rgs6(gg, gg6, pos);
+        
+        float4 uu6[6];
+        mem_rgs6(uu, uu6, pos);
+        
+        //sum,diag
+        float s = 0e0f;
+        float d = 0e0f;
+        
+        //arms
+        for(int i=0; i<6; i++)
+        {
+            float g1 = (gg6[i].x>0.0f); //invert
+            d += g1;
+            s += g1*uu6[i].x;
+        }
+        
+        float4 r;
+        r.x = (b.x - msh.rdx2*s)/d;
+        
+        //jacobi
+        write_imagef(rr, pos, r);
     }
-    
-    float4 u = read_imagef(uu, pos);
-    write_imagef(rr, pos, s - 6.0f*u.x);
-
     return;
 }
 

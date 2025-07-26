@@ -17,7 +17,6 @@
 #include <time.h>
 
 #include "ocl.h"
-#include "msh.h"
 #include "mg.h"
 #include "io.h"
 
@@ -50,7 +49,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){6,6,6};
+    mg.le = (cl_int3){4,4,4};
     mg.nl = mg.le.x;
     mg.dx = powf(2e0f, -mg.le.x);
     mg.dt = 0.5f;
@@ -83,21 +82,25 @@ int main(int argc, const char * argv[])
         struct lvl_obj *lvl = &mg.lvls[l];
         mg_geo(&ocl, &mg, lvl);
         
-        //write
-        wrt_xmf(&ocl, lvl, l, 0);
-        wrt_img1(&ocl, lvl->gg, &lvl->vtx, "gg", l, 0);
-        wrt_img1(&ocl, lvl->uu, &lvl->vtx, "uu", l, 0);
-        wrt_img1(&ocl, lvl->bb, &lvl->vtx, "bb", l, 0);
-        wrt_img1(&ocl, lvl->rr, &lvl->vtx, "rr", l, 0);
+//        //write
+//        wrt_xmf(&ocl, lvl, l, 0);
+//        wrt_img1(&ocl, lvl->gg, &lvl->vtx, "gg", l, 0);
+//        wrt_img1(&ocl, lvl->uu, &lvl->vtx, "uu", l, 0);
+//        wrt_img1(&ocl, lvl->bb, &lvl->vtx, "bb", l, 0);
+//        wrt_img1(&ocl, lvl->rr, &lvl->vtx, "rr", l, 0);
         
     }
     
-//    //write
-//    wrt_xmf(&ocl, lvl, 0, 0);
-//    wrt_img1(&ocl, lvl->gg, &lvl->vtx, "gg", 0, 0);
-//    wrt_img1(&ocl, lvl->uu, &lvl->vtx, "uu", 0, 0);
-//    wrt_img1(&ocl, lvl->bb, &lvl->vtx, "bb", 0, 0);
-//    wrt_img1(&ocl, lvl->rr, &lvl->vtx, "rr", 0, 0);
+    
+    //solve
+    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 5);
+    
+    //write
+    wrt_xmf(&ocl, lvl, 0, 0);
+    wrt_img1(&ocl, lvl->gg, &lvl->vtx, "gg", 0, 0);
+    wrt_img1(&ocl, lvl->uu, &lvl->vtx, "uu", 0, 0);
+    wrt_img1(&ocl, lvl->bb, &lvl->vtx, "bb", 0, 0);
+    wrt_img1(&ocl, lvl->rr, &lvl->vtx, "rr", 0, 0);
     
     //clean
     ocl.err = clReleaseKernel(vtx_ini);

@@ -4,8 +4,7 @@
 //
 //  Created by Toby Simpson on 14.04.2025.
 //
-#include <time.h>
-#include <math.h>
+
 #include "mg.h"
 
 
@@ -30,16 +29,26 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         lvl->ele.n[1] = 1<<lvl->le.y;
         lvl->ele.n[2] = 1<<lvl->le.z;
         
+        lvl->ele.i[0] = lvl->ele.n[0] - 2;
+        lvl->ele.i[1] = lvl->ele.n[1] - 2;
+        lvl->ele.i[2] = lvl->ele.n[2] - 2;
+        
         lvl->vtx.n[0] = lvl->ele.n[0] + 1;
         lvl->vtx.n[1] = lvl->ele.n[1] + 1;
         lvl->vtx.n[2] = lvl->ele.n[2] + 1;
         
+        lvl->vtx.i[0] = lvl->vtx.n[0] - 2;
+        lvl->vtx.i[1] = lvl->vtx.n[1] - 2;
+        lvl->vtx.i[2] = lvl->vtx.n[2] - 2;
+        
+
         //dx
         lvl->msh.dx = mg->dx*powf(2e0f,l);
         lvl->msh.dt = mg->dt;
         
         //mesh
-        msh_ini(&lvl->msh);
+        lvl->msh.dx2        = lvl->msh.dx*lvl->msh.dx;
+        lvl->msh.rdx2       = 1e0f/lvl->msh.dx2;
         
         printf("lvl %d [%d,%d,%d] %f %f\n", l, lvl->le.x, lvl->le.y, lvl->le.z, lvl->msh.dx, lvl->msh.dt);
         
@@ -83,31 +92,31 @@ void mg_geo(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lvl)
     ocl->err = clSetKernelArg(mg->vtx_geo,  1, sizeof(cl_mem),            (void*)&lvl->gg);
     
     //geo
-    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->vtx_geo, 3, NULL, (size_t*)lvl->vtx.n, NULL, 0, NULL, &ocl->event);
+    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->vtx_geo, 3, NULL, lvl->vtx.n, NULL, 0, NULL, &ocl->event);
 
     return;
 }
 
 
-//jacobi (no res)
+//jacobi (twice)
 void mg_jac(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, struct lvl_obj *lvl, int nj)
 {
-    //args
-    ocl->err = clSetKernelArg(op->vtx_res,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
-    ocl->err = clSetKernelArg(op->vtx_res,  1, sizeof(cl_mem),            (void*)&lvl->gg);
-    ocl->err = clSetKernelArg(op->vtx_res,  2, sizeof(cl_mem),            (void*)&lvl->uu);
-    ocl->err = clSetKernelArg(op->vtx_res,  3, sizeof(cl_mem),            (void*)&lvl->bb);
-    ocl->err = clSetKernelArg(op->vtx_res,  4, sizeof(cl_mem),            (void*)&lvl->rr);
-    
     //jac
     ocl->err = clSetKernelArg(op->vtx_jac,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
-    ocl->err = clSetKernelArg(op->vtx_jac,  1, sizeof(cl_mem),            (void*)&lvl->uu);
-    ocl->err = clSetKernelArg(op->vtx_jac,  2, sizeof(cl_mem),            (void*)&lvl->rr);
+    ocl->err = clSetKernelArg(op->vtx_jac,  1, sizeof(cl_mem),            (void*)&lvl->gg);
+    ocl->err = clSetKernelArg(op->vtx_jac,  3, sizeof(cl_mem),            (void*)&lvl->bb);
     
-    //smooth
+    //smooth/swap
     for(int j=0; j<nj; j++)
     {
-        ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, op->vtx_res, 3, mg->off, lvl->vtx.i, NULL, 0, NULL, NULL);
+        ocl->err = clSetKernelArg(op->vtx_jac,  2, sizeof(cl_mem),            (void*)&lvl->uu);
+        ocl->err = clSetKernelArg(op->vtx_jac,  4, sizeof(cl_mem),            (void*)&lvl->rr);
+        
+        ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, op->vtx_jac, 3, mg->off, lvl->vtx.i, NULL, 0, NULL, NULL);
+        
+        ocl->err = clSetKernelArg(op->vtx_jac,  2, sizeof(cl_mem),            (void*)&lvl->rr);
+        ocl->err = clSetKernelArg(op->vtx_jac,  4, sizeof(cl_mem),            (void*)&lvl->uu);
+        
         ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, op->vtx_jac, 3, mg->off, lvl->vtx.i, NULL, 0, NULL, NULL);
     }
 
