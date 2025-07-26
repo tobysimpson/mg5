@@ -48,6 +48,11 @@ void wrt_xmf(struct ocl_obj *ocl, struct lvl_obj *lvl, int l, int f)
     fprintf(file1,"             /Users/toby/Downloads/raw/uu.%02d.%03d.raw\n", l, f);
     fprintf(file1,"           </DataItem>\n");
     fprintf(file1,"         </Attribute>\n");
+    fprintf(file1,"         <Attribute Name=\"bb\" Center=\"Node\" AttributeType=\"Scalar\">\n");
+    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->vtx.n[2],lvl->vtx.n[1],lvl->vtx.n[0]);
+    fprintf(file1,"             /Users/toby/Downloads/raw/bb.%02d.%03d.raw\n", l, f);
+    fprintf(file1,"           </DataItem>\n");
+    fprintf(file1,"         </Attribute>\n");
     fprintf(file1,"         <Attribute Name=\"rr\" Center=\"Node\" AttributeType=\"Scalar\">\n");
     fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->vtx.n[2],lvl->vtx.n[1],lvl->vtx.n[0]);
     fprintf(file1,"             /Users/toby/Downloads/raw/rr.%02d.%03d.raw\n", l, f);

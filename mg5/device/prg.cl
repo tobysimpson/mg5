@@ -23,23 +23,10 @@
 //object
 struct msh_obj
 {
-    int3    le;
-    int3    ne;
-    int3    nv;
-    
-    float    dt;
-    float    dx;
-    
-    float    dx2;
-    float    rdx2;
-    
-    ulong      of_sz[3];
-    
-    ulong      nv_sz[3];
-    ulong      ne_sz[3];
-    
-    ulong      iv_sz[3];
-    ulong      ie_sz[3];
+    float        dt;
+    float        dx;
+    float        dx2;
+    float        rdx2;
 };
 
 
@@ -82,10 +69,12 @@ void mem_rgs6(read_only image3d_t uu, float4 ss[6], int4 pos)
  */
 
 
-//image test
+//ini
 kernel void vtx_ini(const struct msh_obj  msh,
+                    write_only image3d_t  gg,
                     write_only image3d_t  uu,
-                    write_only image3d_t  bb)
+                    write_only image3d_t  bb,
+                    write_only image3d_t  rr)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
 //    int4 dim = get_image_dim(uu);
@@ -96,8 +85,10 @@ kernel void vtx_ini(const struct msh_obj  msh,
     
     float4 x = msh.dx*convert_float4(pos);
     
-    write_imagef(uu, pos, 0);
-    write_imagef(bb, pos, sin(x.x));
+    write_imagef(gg, pos, 0);
+    write_imagef(uu, pos, sin(x.x));
+    write_imagef(bb, pos, 0);
+    write_imagef(rr, pos, 0);
 
     return;
 }
@@ -105,8 +96,8 @@ kernel void vtx_ini(const struct msh_obj  msh,
 
 //image test
 kernel void vtx_geo(const struct msh_obj  msh,
-                  read_only     image3d_t       uu,
-                  write_only    image3d_t       rr)
+                    read_only     image3d_t       uu,
+                    write_only    image3d_t       rr)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
 //    int4 dim = get_image_dim(img1);

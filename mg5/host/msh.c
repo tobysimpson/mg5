@@ -13,7 +13,7 @@ void msh_ini(struct msh_obj *msh)
     msh->dx2        = msh->dx*msh->dx;
     msh->rdx2       = 1e0f/msh->dx2;
     
-    printf("msh %e %e\n", msh->dt, msh->dx);
+    printf("msh %f %f\n", msh->dx, msh->dt);
 
     return;
 }
