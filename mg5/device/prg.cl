@@ -61,6 +61,27 @@ void mem_rgs6(read_only image3d_t uu, float4 ss[6], int4 pos)
     return;
 }
 
+/*
+ ============================
+ sdf
+ ============================
+ */
+
+//sphere
+float sdf_sph(float4 x, float4 c, float r)
+{
+    return length(x.xyz - c.xyz) - r;
+}
+
+
+//cuboid
+float sdf_cub(float4 x, float4 c, float4 r)
+{
+    float4 d = fabs(x - c) - r;
+    
+    return max(d.x,max(d.y,d.z));
+}
+
 
 /*
  ============================
@@ -85,7 +106,11 @@ kernel void vtx_ini(const struct msh_obj  msh,
     
     float4 x = msh.dx*convert_float4(pos);
     
-    write_imagef(gg, pos, 0);
+    float g1 = sdf_sph(x,(float4){0.6f, 0.6f, 0.4f, 0.0f}, 0.25f);
+    float g2 = sdf_cub(x,(float4){0.4f, 0.4f, 0.6f, 0.0f}, (float4){0.25f, 0.25f, 0.25f, 0.0f});
+    float g = min(g1,g2);
+    
+    write_imagef(gg, pos, g);
     write_imagef(uu, pos, sin(x.x));
     write_imagef(bb, pos, 0);
     write_imagef(rr, pos, 0);
@@ -127,6 +152,8 @@ kernel void vtx_geo(const struct msh_obj  msh,
  solve
  ============================
  */
+
+
 
 /*
  ============================

@@ -50,9 +50,9 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){2,2,2};
-    mg.nl = mg.le.x;
-    mg.dx = 1.0f;
+    mg.le = (cl_int3){6,6,6};
+    mg.nl = 1; //mg.le.x;
+    mg.dx = powf(2e0f, -mg.le.x);
     mg.dt = 0.5f;
     mg_ini(&ocl, &mg);
     

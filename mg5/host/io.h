@@ -18,11 +18,6 @@
 #define ROOT_WRITE  "/Users/toby/Downloads/"
 
 void wrt_xmf(struct ocl_obj *ocl, struct lvl_obj *lvl, int l, int f);
-
-void wrt_flt1(struct ocl_obj *ocl, struct msh_obj *msh, cl_mem *buf, char *dsc, int idx, cl_int n_tot);
-void wrt_flt3(struct ocl_obj *ocl, struct msh_obj *msh, cl_mem *buf, char *dsc, int idx, cl_int n_tot);
-void wrt_flt4(struct ocl_obj *ocl, struct msh_obj *msh, cl_mem *buf, char *dsc, int idx, cl_int n_tot);
-
 void wrt_img1(struct ocl_obj *ocl, cl_mem img, struct dim_obj *dim, char* tag, int l, int f);
 
 #endif /* io_h */
