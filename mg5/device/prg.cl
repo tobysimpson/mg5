@@ -78,8 +78,8 @@ kernel void test1(const struct msh_obj  msh,
     
     printf("%v4d %v4d\n", off, pos);
     
-    write_imagef(img1, pos, 1);
-    write_imagef(img2, pos, 0);
+    write_imagef(img1, pos, pos.x);
+    write_imagef(img2, pos, pos.y);
 
     return;
 }

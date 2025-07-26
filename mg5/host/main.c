@@ -49,7 +49,7 @@ int main(int argc, const char * argv[])
     
     //mesh
     struct msh_obj msh;
-    msh.le = (cl_int3){1,1,1};
+    msh.le = (cl_int3){2,2,2};
     msh.dx = 16e0f*powf(2e0f, -msh.le.x);
     msh.dt = 0.5f;
     msh_ini(&msh);
@@ -69,7 +69,7 @@ int main(int argc, const char * argv[])
     struct lvl_obj *lvl = &mg.lvls[0];
 
     //description
-    cl_image_format fmt1 = {CL_RGB, CL_FLOAT};
+    cl_image_format fmt1 = {CL_R, CL_FLOAT};
     cl_image_desc   dsc1 = {CL_MEM_OBJECT_IMAGE3D, msh.nv.x, msh.nv.y, msh.nv.z};
 
     //allocate
@@ -78,15 +78,12 @@ int main(int argc, const char * argv[])
     
 
 
-    clGetImageInfo(img1, CL_IMAGE_ROW_PITCH,   sizeof(size_t), &dsc1.image_row_pitch,   NULL);
-    clGetImageInfo(img1, CL_IMAGE_SLICE_PITCH, sizeof(size_t), &dsc1.image_slice_pitch, NULL);
+//    clGetImageInfo(img1, CL_IMAGE_ROW_PITCH,   sizeof(size_t), &dsc1.image_row_pitch,   NULL);
+//    clGetImageInfo(img1, CL_IMAGE_SLICE_PITCH, sizeof(size_t), &dsc1.image_slice_pitch, NULL);
     
-    size_t org[3] = {0,0,0};
-    
-    void* ptr = clEnqueueMapImage(ocl.command_queue, img1, CL_TRUE, CL_MAP_READ, org, msh.nv_sz, &dsc1.image_row_pitch, &dsc1.image_slice_pitch, 0, NULL, NULL, NULL);
                       
                       
-                      //kernel
+    //kernel
     cl_kernel test1 = clCreateKernel(ocl.program, "test1", &ocl.err);
     cl_kernel test2 = clCreateKernel(ocl.program, "test2", &ocl.err);
 
@@ -100,8 +97,12 @@ int main(int argc, const char * argv[])
     ocl.err = clSetKernelArg(test2, 2, sizeof(cl_mem)        , &img2);
 
     //run
-    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, test1, 3, lvl->msh.of_sz, lvl->msh.iv_sz, NULL, 0, NULL, NULL);
-    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, test2, 3, NULL, lvl->msh.nv_sz, NULL, 0, NULL, NULL);
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, test1, 3, NULL, lvl->msh.nv_sz, NULL, 0, NULL, NULL);
+//    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, test2, 3, NULL, lvl->msh.nv_sz, NULL, 0, NULL, NULL);
+    
+    //write
+    wrt_xmf(&ocl, &msh, 0, 0);
+    wrt_img1(&ocl, img1, &dsc1, "uu", 0, 0);
     
     //clean
     ocl.err = clReleaseKernel(test1);
