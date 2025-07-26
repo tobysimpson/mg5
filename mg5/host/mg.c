@@ -41,6 +41,8 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         //mesh
         msh_ini(&lvl->msh);
         
+        printf("lvl %d [%d,%d,%d] %f %f\n", l, lvl->le.x, lvl->le.y, lvl->le.z, lvl->msh.dx, lvl->msh.dt);
+        
         //description
         cl_image_format fmt1 = {CL_R, CL_FLOAT};
         cl_image_desc   dsc1 = {CL_MEM_OBJECT_IMAGE3D, lvl->vtx.n[0], lvl->vtx.n[1], lvl->vtx.n[2]};
@@ -74,7 +76,7 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
 
 
 //geometry
-void mg_geo(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lvl, cl_mem *ss)
+void mg_geo(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lvl)
 {
     //args
     ocl->err = clSetKernelArg(mg->vtx_geo,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);

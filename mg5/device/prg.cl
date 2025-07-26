@@ -100,9 +100,22 @@ kernel void vtx_ini(const struct msh_obj  msh,
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
 //    int4 dim = get_image_dim(uu);
     
-//    printf("%v4d\n", pos);
+    float4 x = msh.dx*convert_float4(pos);
     
-//    int idx = utl_idx(pos, dim);
+    write_imagef(gg, pos, 1.0f);
+    write_imagef(uu, pos, sin(x.x));
+    write_imagef(bb, pos, sin(x.x));
+    write_imagef(rr, pos, 0);
+
+    return;
+}
+
+
+//geom
+kernel void vtx_geo(const       struct msh_obj  msh,
+                    write_only  image3d_t       gg)
+{
+    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
     
     float4 x = msh.dx*convert_float4(pos);
     
@@ -111,16 +124,18 @@ kernel void vtx_ini(const struct msh_obj  msh,
     float g = min(g1,g2);
     
     write_imagef(gg, pos, g);
-    write_imagef(uu, pos, sin(x.x));
-    write_imagef(bb, pos, 0);
-    write_imagef(rr, pos, 0);
 
     return;
 }
 
+/*
+ ============================
+ solve
+ ============================
+ */
 
 //image test
-kernel void vtx_geo(const struct msh_obj  msh,
+kernel void vtx_fwd(const struct msh_obj  msh,
                     read_only     image3d_t       uu,
                     write_only    image3d_t       rr)
 {
@@ -146,14 +161,6 @@ kernel void vtx_geo(const struct msh_obj  msh,
 
     return;
 }
-
-/*
- ============================
- solve
- ============================
- */
-
-
 
 /*
  ============================

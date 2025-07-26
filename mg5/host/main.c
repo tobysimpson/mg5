@@ -51,7 +51,7 @@ int main(int argc, const char * argv[])
     //multigrid
     struct mg_obj mg;
     mg.le = (cl_int3){6,6,6};
-    mg.nl = 1; //mg.le.x;
+    mg.nl = mg.le.x;
     mg.dx = powf(2e0f, -mg.le.x);
     mg.dt = 0.5f;
     mg_ini(&ocl, &mg);
@@ -77,13 +77,27 @@ int main(int argc, const char * argv[])
     //ini
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, vtx_ini, 3, NULL, lvl->vtx.n, NULL, 0, NULL, NULL);
 
+    //geom
+    for(int l=0; l<mg.nl; l++)
+    {
+        struct lvl_obj *lvl = &mg.lvls[l];
+        mg_geo(&ocl, &mg, lvl);
+        
+        //write
+        wrt_xmf(&ocl, lvl, l, 0);
+        wrt_img1(&ocl, lvl->gg, &lvl->vtx, "gg", l, 0);
+        wrt_img1(&ocl, lvl->uu, &lvl->vtx, "uu", l, 0);
+        wrt_img1(&ocl, lvl->bb, &lvl->vtx, "bb", l, 0);
+        wrt_img1(&ocl, lvl->rr, &lvl->vtx, "rr", l, 0);
+        
+    }
     
-    //write
-    wrt_xmf(&ocl, lvl, 0, 0);
-    wrt_img1(&ocl, lvl->gg, &lvl->vtx, "gg", 0, 0);
-    wrt_img1(&ocl, lvl->uu, &lvl->vtx, "uu", 0, 0);
-    wrt_img1(&ocl, lvl->bb, &lvl->vtx, "bb", 0, 0);
-    wrt_img1(&ocl, lvl->rr, &lvl->vtx, "rr", 0, 0);
+//    //write
+//    wrt_xmf(&ocl, lvl, 0, 0);
+//    wrt_img1(&ocl, lvl->gg, &lvl->vtx, "gg", 0, 0);
+//    wrt_img1(&ocl, lvl->uu, &lvl->vtx, "uu", 0, 0);
+//    wrt_img1(&ocl, lvl->bb, &lvl->vtx, "bb", 0, 0);
+//    wrt_img1(&ocl, lvl->rr, &lvl->vtx, "rr", 0, 0);
     
     //clean
     ocl.err = clReleaseKernel(vtx_ini);
