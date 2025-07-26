@@ -144,7 +144,7 @@ kernel void vtx_jac(const struct msh_obj  msh,
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
     
     //read
-    float4 b = read_imagef(uu, pos);
+    float4 b = read_imagef(bb, pos);
     float4 g = read_imagef(gg, pos);
     
     if(g.x>0.0f)
@@ -163,13 +163,14 @@ kernel void vtx_jac(const struct msh_obj  msh,
         //arms
         for(int i=0; i<6; i++)
         {
-            float g1 = (gg6[i].x>0.0f); //invert
-            d += g1;
-            s += g1*uu6[i].x;
+//            float g1 = (gg6[i].x>0.0f); //invert
+            d += 1.0f;
+            s -= uu6[i].x;
         }
         
+        
         float4 r;
-        r.x = (b.x - msh.rdx2*s)/d;
+        r.x = (msh.dx2*b.x - s)/d;
         
         //jacobi
         write_imagef(rr, pos, r);

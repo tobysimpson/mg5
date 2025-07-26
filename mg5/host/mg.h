@@ -10,7 +10,6 @@
 #define mg_h
 
 #include <stdio.h>
-#include <time.h>
 #include <math.h>
 #include "ocl.h"
 

@@ -17,6 +17,8 @@
 #include <CL/cl.h>
 #endif
 
+#include <stdio.h>
+
 
 //object
 struct ocl_obj

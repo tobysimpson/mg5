@@ -93,7 +93,7 @@ int main(int argc, const char * argv[])
     
     
     //solve
-    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 5);
+    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 1000);
     
     //write
     wrt_xmf(&ocl, lvl, 0, 0);
