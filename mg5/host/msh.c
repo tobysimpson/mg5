@@ -50,3 +50,10 @@ void msh_ini(struct msh_obj *msh)
 
     return;
 }
+
+
+
+//    clGetImageInfo(img1, CL_IMAGE_ROW_PITCH,   sizeof(size_t), &dsc1.image_row_pitch,   NULL);
+//    clGetImageInfo(img1, CL_IMAGE_SLICE_PITCH, sizeof(size_t), &dsc1.image_slice_pitch, NULL);
+    
+       

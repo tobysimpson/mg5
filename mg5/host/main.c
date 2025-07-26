@@ -49,7 +49,7 @@ int main(int argc, const char * argv[])
     
     //mesh
     struct msh_obj msh;
-    msh.le = (cl_int3){2,2,2};
+    msh.le = (cl_int3){1,1,1};
     msh.dx = 16e0f*powf(2e0f, -msh.le.x);
     msh.dt = 0.5f;
     msh_ini(&msh);
@@ -73,15 +73,8 @@ int main(int argc, const char * argv[])
     cl_image_desc   dsc1 = {CL_MEM_OBJECT_IMAGE3D, msh.nv.x, msh.nv.y, msh.nv.z};
 
     //allocate
-    cl_mem img1 = clCreateImage(ocl.context, CL_MEM_HOST_READ_ONLY, &fmt1, &dsc1, NULL, &ocl.err);
-    cl_mem img2 = clCreateImage(ocl.context, CL_MEM_HOST_READ_ONLY, &fmt1, &dsc1, NULL, &ocl.err);
-    
-
-
-//    clGetImageInfo(img1, CL_IMAGE_ROW_PITCH,   sizeof(size_t), &dsc1.image_row_pitch,   NULL);
-//    clGetImageInfo(img1, CL_IMAGE_SLICE_PITCH, sizeof(size_t), &dsc1.image_slice_pitch, NULL);
-    
-                      
+    cl_mem uu = clCreateImage(ocl.context, CL_MEM_HOST_READ_ONLY, &fmt1, &dsc1, NULL, &ocl.err);
+    cl_mem rr = clCreateImage(ocl.context, CL_MEM_HOST_READ_ONLY, &fmt1, &dsc1, NULL, &ocl.err);
                       
     //kernel
     cl_kernel test1 = clCreateKernel(ocl.program, "test1", &ocl.err);
@@ -89,30 +82,29 @@ int main(int argc, const char * argv[])
 
     //arg
     ocl.err = clSetKernelArg(test1, 0, sizeof(struct msh_obj), &msh);
-    ocl.err = clSetKernelArg(test1, 1, sizeof(cl_mem)        , &img1);
-    ocl.err = clSetKernelArg(test1, 2, sizeof(cl_mem)        , &img2);
+    ocl.err = clSetKernelArg(test1, 1, sizeof(cl_mem)        , &uu);
+    ocl.err = clSetKernelArg(test1, 2, sizeof(cl_mem)        , &rr);
     
     ocl.err = clSetKernelArg(test2, 0, sizeof(struct msh_obj), &msh);
-    ocl.err = clSetKernelArg(test2, 1, sizeof(cl_mem)        , &img1);
-    ocl.err = clSetKernelArg(test2, 2, sizeof(cl_mem)        , &img2);
+    ocl.err = clSetKernelArg(test2, 1, sizeof(cl_mem)        , &uu);
+    ocl.err = clSetKernelArg(test2, 2, sizeof(cl_mem)        , &rr);
 
     //run
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, test1, 3, NULL, lvl->msh.nv_sz, NULL, 0, NULL, NULL);
-//    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, test2, 3, NULL, lvl->msh.nv_sz, NULL, 0, NULL, NULL);
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, test2, 3, lvl->msh.of_sz, lvl->msh.iv_sz, NULL, 0, NULL, NULL);
     
     //write
     wrt_xmf(&ocl, &msh, 0, 0);
-    wrt_img1(&ocl, img1, &dsc1, "uu", 0, 0);
+    wrt_img1(&ocl, uu, &dsc1, "uu", 0, 0);
+    wrt_img1(&ocl, rr, &dsc1, "rr", 0, 0);
     
     //clean
     ocl.err = clReleaseKernel(test1);
     ocl.err = clReleaseKernel(test2);
     
-    ocl.err = clReleaseMemObject(img1);
-    ocl.err = clReleaseMemObject(img2);
+    ocl.err = clReleaseMemObject(uu);
+    ocl.err = clReleaseMemObject(rr);
 
-    
-    //clean
     mg_fin(&ocl, &mg);
     ocl_fin(&ocl);
     

@@ -45,6 +45,11 @@ void wrt_xmf(struct ocl_obj *ocl, struct msh_obj *msh, int l, int f)
     fprintf(file1,"             /Users/toby/Downloads/raw/uu.%02d.%03d.raw\n", l, f);
     fprintf(file1,"           </DataItem>\n");
     fprintf(file1,"         </Attribute>\n");
+    fprintf(file1,"         <Attribute Name=\"rr\" Center=\"Node\" AttributeType=\"Scalar\">\n");
+    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%u %u %u 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", msh->nv.z, msh->nv.y, msh->nv.x);
+    fprintf(file1,"             /Users/toby/Downloads/raw/rr.%02d.%03d.raw\n", l, f);
+    fprintf(file1,"           </DataItem>\n");
+    fprintf(file1,"         </Attribute>\n");
 //    fprintf(file1,"         <Attribute Name=\"vv\" Center=\"Node\" AttributeType=\"Vector\">\n");
 //    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%u %u %u 3\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", msh->nv.z, msh->nv.y, msh->nv.x);
 //    fprintf(file1,"             /Users/toby/Downloads/raw/vv.%02u%02u%02u.%03d.raw\n", msh->le.x, msh->le.y, msh->le.z, idx);
