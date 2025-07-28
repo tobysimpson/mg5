@@ -48,7 +48,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){3,3,3};
+    mg.le = (cl_int3){1,1,1};
     mg.nl = mg.le.x;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;
@@ -124,6 +124,11 @@ int main(int argc, const char * argv[])
     
 //    clEnqueueCopyImage(ocl.command_queue, lf.uu, lf.rr, <#const size_t *#>, <#const size_t *#>, <#const size_t *#>, <#cl_uint#>, <#const cl_event *#>, <#cl_event *#>)
 //    clEnqueueFillImage(<#cl_command_queue#>, <#cl_mem#>, <#const void *#>, <#const size_t *#>, <#const size_t *#>, <#cl_uint#>, <#const cl_event *#>, <#cl_event *#>)
+    
+    size_t ogn[3] = {0,0,0};
+    cl_float4 ptn = {0.0f, 0.0f, 0.0f, 0.0f};
+    clEnqueueFillImage(ocl.command_queue, mg.lvls[0].uu, &ptn, mg.ogn, mg.lvls[0].ele.n, 0, NULL, NULL);
+    clFlush(ocl.command_queue);
     
     //copy
 //    ocl.err = clEnqueueCopyBuffer(ocl.command_queue, lf.uu, pp, 0, 0, msh.ne_tot*sizeof(cl_float), 0, NULL, &ocl.event);

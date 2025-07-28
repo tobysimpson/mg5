@@ -75,7 +75,8 @@ struct mg_obj
     //ops
     struct op_obj ops[1];
     
-    //offset
+    //origin, offset
+    size_t ogn[3];
     size_t off[3];
 };
 

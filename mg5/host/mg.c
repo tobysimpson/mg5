@@ -41,8 +41,17 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         lvl->msh.dx2        = lvl->msh.dx*lvl->msh.dx;
         lvl->msh.rdx2       = 1e0f/lvl->msh.dx2;
         
-        printf("lvl %d [%d,%d,%d] [%3zu,%3zu,%3zu] %f %f\n", l, lvl->le.x, lvl->le.y, lvl->le.z, lvl->ele.n[0], lvl->ele.n[1], lvl->ele.n[2], lvl->msh.dx, lvl->msh.dt);
-        
+        printf("lvl %d [%d,%d,%d] [%2zu,%2zu,%2zu] %4zu %f %f\n", l,
+               lvl->le.x,
+               lvl->le.y,
+               lvl->le.z,
+               lvl->ele.n[0],
+               lvl->ele.n[1],
+               lvl->ele.n[2],
+               lvl->ele.n[0]*lvl->ele.n[1]*lvl->ele.n[2],
+               lvl->msh.dx,
+               lvl->msh.dt);
+
         //description
         cl_image_format fmt1 = {CL_R, CL_FLOAT};
         cl_image_desc   dsc1 = {CL_MEM_OBJECT_IMAGE3D, lvl->ele.n[0], lvl->ele.n[1], lvl->ele.n[2]};
@@ -52,6 +61,10 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         lvl->uu = clCreateImage(ocl->context, CL_MEM_HOST_READ_ONLY, &fmt1, &dsc1, NULL, &ocl->err);
         lvl->bb = clCreateImage(ocl->context, CL_MEM_HOST_READ_ONLY, &fmt1, &dsc1, NULL, &ocl->err);
         lvl->rr = clCreateImage(ocl->context, CL_MEM_HOST_READ_ONLY, &fmt1, &dsc1, NULL, &ocl->err);
+        
+//        size_t mem_sz;
+//        ocl->err = clGetMemObjectInfo(lvl->uu, CL_MEM_SIZE, sizeof(size_t), &mem_sz, NULL);
+//        printf("mem_sz %lu\n", mem_sz);
     }
     
     //geo
@@ -61,9 +74,14 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
     mg->ele_prj = clCreateKernel(ocl->program, "ele_prj", &ocl->err);
     mg->ele_itp = clCreateKernel(ocl->program, "ele_itp", &ocl->err);
     
-    //mech
+    //poisson
     mg->ops[0].ele_res = clCreateKernel(ocl->program, "ele_res", &ocl->err);
     mg->ops[0].ele_jac = clCreateKernel(ocl->program, "ele_jac", &ocl->err);
+    
+    //origin
+    mg->ogn[0] = 0;
+    mg->ogn[1] = 0;
+    mg->ogn[2] = 0;
     
     //offset
     mg->off[0] = 1;
