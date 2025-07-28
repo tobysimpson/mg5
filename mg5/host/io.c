@@ -22,7 +22,7 @@ void wrt_xmf(struct ocl_obj *ocl, struct lvl_obj *lvl, int l, int f)
     
     fprintf(file1,"<Xdmf>\n");
     fprintf(file1,"  <Domain>\n");
-    fprintf(file1,"    <Topology name=\"topo\" TopologyType=\"3DCoRectMesh\" Dimensions=\"%zu %zu %zu\"></Topology>\n", lvl->vtx.n[2], lvl->vtx.n[1], lvl->vtx.n[0]);
+    fprintf(file1,"    <Topology name=\"topo\" TopologyType=\"3DCoRectMesh\" Dimensions=\"%zu %zu %zu\"></Topology>\n", lvl->ele.n[2]+1, lvl->ele.n[1]+1, lvl->ele.n[0]+1);
     fprintf(file1,"      <Geometry name=\"geo\" Type=\"ORIGIN_DXDYDZ\">\n");
     fprintf(file1,"        <!-- Origin -->\n");
     fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", 0e0f, 0e0f, 0e0f);
@@ -33,31 +33,36 @@ void wrt_xmf(struct ocl_obj *ocl, struct lvl_obj *lvl, int l, int f)
     fprintf(file1,"      <Grid Name=\"T1\" GridType=\"Uniform\">\n");
     fprintf(file1,"        <Topology Reference=\"/Xdmf/Domain/Topology[1]\"/>\n");
     fprintf(file1,"        <Geometry Reference=\"/Xdmf/Domain/Geometry[1]\"/>\n");
+
+    fprintf(file1,"         <Attribute Name=\"gg\" Center=\"Cell\" AttributeType=\"Scalar\">\n");
+    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->ele.n[2],lvl->ele.n[1],lvl->ele.n[0]);
+    fprintf(file1,"             /Users/toby/Downloads/raw/gg.%02d.%03d.raw\n", l, f);
+    fprintf(file1,"           </DataItem>\n");
+    fprintf(file1,"         </Attribute>\n");
+    
+    fprintf(file1,"         <Attribute Name=\"uu\" Center=\"Cell\" AttributeType=\"Scalar\">\n");
+    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->ele.n[2],lvl->ele.n[1],lvl->ele.n[0]);
+    fprintf(file1,"             /Users/toby/Downloads/raw/uu.%02d.%03d.raw\n", l, f);
+    fprintf(file1,"           </DataItem>\n");
+    fprintf(file1,"         </Attribute>\n");
+    
+    fprintf(file1,"         <Attribute Name=\"bb\" Center=\"Cell\" AttributeType=\"Scalar\">\n");
+    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->ele.n[2],lvl->ele.n[1],lvl->ele.n[0]);
+    fprintf(file1,"             /Users/toby/Downloads/raw/bb.%02d.%03d.raw\n", l, f);
+    fprintf(file1,"           </DataItem>\n");
+    fprintf(file1,"         </Attribute>\n");
+    
+    fprintf(file1,"         <Attribute Name=\"rr\" Center=\"Cell\" AttributeType=\"Scalar\">\n");
+    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->ele.n[2],lvl->ele.n[1],lvl->ele.n[0]);
+    fprintf(file1,"             /Users/toby/Downloads/raw/rr.%02d.%03d.raw\n", l, f);
+    fprintf(file1,"           </DataItem>\n");
+    fprintf(file1,"         </Attribute>\n");
+    
 //    fprintf(file1,"         <Attribute Name=\"gg\" Center=\"Cell\" AttributeType=\"Matrix\">\n");
 //    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%u %u %u 4\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", msh->ne.z, msh->ne.y, msh->ne.x);
 //    fprintf(file1,"             /Users/toby/Downloads/raw/gg.%02u%02u%02u.%03d.raw\n", msh->le.x, msh->le.y, msh->le.z, idx);
 //    fprintf(file1,"           </DataItem>\n");
 //    fprintf(file1,"         </Attribute>\n");
-    fprintf(file1,"         <Attribute Name=\"gg\" Center=\"Node\" AttributeType=\"Scalar\">\n");
-    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->vtx.n[2],lvl->vtx.n[1],lvl->vtx.n[0]);
-    fprintf(file1,"             /Users/toby/Downloads/raw/gg.%02d.%03d.raw\n", l, f);
-    fprintf(file1,"           </DataItem>\n");
-    fprintf(file1,"         </Attribute>\n");
-    fprintf(file1,"         <Attribute Name=\"uu\" Center=\"Node\" AttributeType=\"Scalar\">\n");
-    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->vtx.n[2],lvl->vtx.n[1],lvl->vtx.n[0]);
-    fprintf(file1,"             /Users/toby/Downloads/raw/uu.%02d.%03d.raw\n", l, f);
-    fprintf(file1,"           </DataItem>\n");
-    fprintf(file1,"         </Attribute>\n");
-    fprintf(file1,"         <Attribute Name=\"bb\" Center=\"Node\" AttributeType=\"Scalar\">\n");
-    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->vtx.n[2],lvl->vtx.n[1],lvl->vtx.n[0]);
-    fprintf(file1,"             /Users/toby/Downloads/raw/bb.%02d.%03d.raw\n", l, f);
-    fprintf(file1,"           </DataItem>\n");
-    fprintf(file1,"         </Attribute>\n");
-    fprintf(file1,"         <Attribute Name=\"rr\" Center=\"Node\" AttributeType=\"Scalar\">\n");
-    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%zu %zu %zu 1\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", lvl->vtx.n[2],lvl->vtx.n[1],lvl->vtx.n[0]);
-    fprintf(file1,"             /Users/toby/Downloads/raw/rr.%02d.%03d.raw\n", l, f);
-    fprintf(file1,"           </DataItem>\n");
-    fprintf(file1,"         </Attribute>\n");
 //    fprintf(file1,"         <Attribute Name=\"vv\" Center=\"Node\" AttributeType=\"Vector\">\n");
 //    fprintf(file1,"           <DataItem Format=\"Binary\" Dimensions=\"%u %u %u 3\" Endian=\"Little\" Precision=\"4\" NumberType=\"Float\">\n", msh->nv.z, msh->nv.y, msh->nv.x);
 //    fprintf(file1,"             /Users/toby/Downloads/raw/vv.%02u%02u%02u.%03d.raw\n", msh->le.x, msh->le.y, msh->le.z, idx);

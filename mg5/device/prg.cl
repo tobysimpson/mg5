@@ -42,6 +42,12 @@ int utl_idx(int4 pos, int4 dim)
     return pos.x + dim.x*pos.y + dim.x*dim.y*pos.z;
 }
 
+//in-bounds
+int utl_bnd(int4 pos, int4 dim)
+{
+    return all(pos.xyz>=0)*all(pos.xyz<dim.xyz);
+}
+
 /*
  ============================
  memory
@@ -91,33 +97,35 @@ float sdf_cub(float4 x, float4 c, float4 r)
 
 
 //ini
-kernel void vtx_ini(const struct msh_obj  msh,
+kernel void ele_ini(const struct msh_obj  msh,
                     write_only image3d_t  gg,
                     write_only image3d_t  uu,
                     write_only image3d_t  bb,
                     write_only image3d_t  rr)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
-//    int4 dim = get_image_dim(uu);
+    int4 dim = get_image_dim(uu);
     
 //    float4 x = msh.dx*convert_float4(pos);
     
+    float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
+    
     write_imagef(gg, pos, 1.0f);
-    write_imagef(uu, pos, (pos.x==0));
+    write_imagef(uu, pos, u);
     write_imagef(bb, pos, 0.0f);
-    write_imagef(rr, pos, (pos.x==0)); //bounds here too
+    write_imagef(rr, pos, u);           //bounds here too
 
     return;
 }
 
 
 //geom
-kernel void vtx_geo(const       struct msh_obj  msh,
+kernel void ele_geo(const       struct msh_obj  msh,
                     write_only  image3d_t       gg)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
     
-    float4 x = msh.dx*convert_float4(pos);
+    float4 x = msh.dx*(convert_float4(pos) + 0.5f);
     
     float g1 = sdf_sph(x,(float4){0.6f, 0.6f, 0.4f, 0.0f}, 0.25f);
     float g2 = sdf_cub(x,(float4){0.4f, 0.4f, 0.6f, 0.0f}, (float4){0.25f, 0.25f, 0.25f, 0.0f});
@@ -135,7 +143,7 @@ kernel void vtx_geo(const       struct msh_obj  msh,
  */
 
 //jacobi
-kernel void vtx_jac(const struct msh_obj  msh,
+kernel void ele_jac(const struct msh_obj  msh,
                     read_only     image3d_t       gg,
                     read_only     image3d_t       uu,
                     read_only     image3d_t       bb,
@@ -184,64 +192,61 @@ kernel void vtx_jac(const struct msh_obj  msh,
  ============================
  */
 
+
 /*
 
-//project
-kernel void vtx_prj(const  struct msh_obj   msh,    //coarse    (out)
-                    global float            *rr,    //fine      (in)
-                    global float            *uu,    //coarse    (out)
-                    global float            *bb)    //coarse    (out)
+//project - sum
+kernel void ele_prj(const  struct msh_obj   mshc,    //coarse    (out)
+                   global float            *rrf,    //fine      (in)
+                   global float            *uuc,    //coarse    (out)
+                   global float            *bbc)    //coarse    (out)
 {
-    int4  vtx_pos  = (int3){get_global_id(0), get_global_id(1), get_global_id(2)} + 1; //interior
-    int   vtx_idx0  = utl_idx(vtx_pos, msh.nv);   //coarse
-    
-    //fine
-    int3 pos = 2*vtx_pos;
-    int3 dim = 2*msh.ne+1;
-    
-    //injection
-    int  vtx_idx1  = utl_idx1(pos,dim);
-    
-    //store/reset
-    uu[vtx_idx0] = 0e0f;
-    bb[vtx_idx0] = rr[vtx_idx1];
-
-    return;
+   int3  ele_pos  = (int3){get_global_id(0), get_global_id(1), get_global_id(2)};
+   int   ele_idx  = utl_idx(ele_pos, mshc.ne);
+   
+   
+   //fine
+   int3 pos = 2*ele_pos;
+   int3 dim = 2*mshc.ne;
+   
+   //sum
+   float s = 0e0f;
+   
+   //sum fine
+   for(int i=0; i<8; i++)
+   {
+       int3 adj_pos = pos + off_ele[i];
+       int  adj_idx = utl_idx1(adj_pos, dim);
+       s += rrf[adj_idx];
+   }
+   
+   //store/reset
+   uuc[ele_idx] = 0e0f;
+   bbc[ele_idx] = s;
+   
+   return;
 }
 
 
-//interpolate
-kernel void vtx_itp(const  struct msh_obj   msh,    //fine      (out)
-                    global float            *u0,    //coarse    (in)
-                    global float            *u1)    //fine      (out)
+//interp - inject
+kernel void ele_itp(const  struct msh_obj   mshf,    //fine      (out)
+                   global float            *uuc,    //coarse    (in)
+                   global float            *uuf)    //fine      (out)
 {
-    int3  vtx_pos  = (int3){get_global_id(0), get_global_id(1), get_global_id(2)} + 1; //fine - interior
-    int   vtx_idx  = utl_idx1(vtx_pos, msh.nv);   //fine
-    
-    //coarse
-    float3 pos = convert_float3(vtx_pos)/2e0f;
-    
-    //round up/down
-    int3 pos0 = convert_int3(floor(pos));
-    int3 pos1 = convert_int3(ceil(pos));
-    
-    //coarse dims
-    int3 dim = 1 + msh.ne/2;
-    
-    //sum
-    float s = 0e0f;
-    s += u0[utl_idx1((int3){pos0.x, pos0.y, pos0.z}, dim)];
-    s += u0[utl_idx1((int3){pos1.x, pos0.y, pos0.z}, dim)];
-    s += u0[utl_idx1((int3){pos0.x, pos1.y, pos0.z}, dim)];
-    s += u0[utl_idx1((int3){pos1.x, pos1.y, pos0.z}, dim)];
-    s += u0[utl_idx1((int3){pos0.x, pos0.y, pos1.z}, dim)];
-    s += u0[utl_idx1((int3){pos1.x, pos0.y, pos1.z}, dim)];
-    s += u0[utl_idx1((int3){pos0.x, pos1.y, pos1.z}, dim)];
-    s += u0[utl_idx1((int3){pos1.x, pos1.y, pos1.z}, dim)];
-    
-    u1[vtx_idx] += s*0.125f;
-    
-    return;
+   int3  ele_pos  = (int3){get_global_id(0), get_global_id(1), get_global_id(2)};
+   int   ele_idx  = utl_idx1(ele_pos, mshf.ne);   //fine
+   
+   //    printf("%2d %v3hlu\n", ele_idx, ele_pos/2);
+   
+   //coarse
+   int3 pos = ele_pos/2;
+   int3 dim = mshf.ne/2;
+   
+   //write - scale
+   uuf[ele_idx] += 0.125f*uuc[utl_idx1(pos, dim)];
+   
+   return;
 }
+
 
 */

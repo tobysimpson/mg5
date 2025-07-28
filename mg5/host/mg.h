@@ -35,7 +35,6 @@ struct lvl_obj
     cl_int3         le;
     
     struct msh_obj  msh;
-    struct dim_obj  vtx;
     struct dim_obj  ele;
 
     //memory
@@ -50,9 +49,9 @@ struct lvl_obj
 struct op_obj
 {
     //operator
-    cl_kernel       vtx_fwd;
-    cl_kernel       vtx_jac;
-    cl_kernel       vtx_res;
+    cl_kernel       ele_fwd;
+    cl_kernel       ele_jac;
+    cl_kernel       ele_res;
 };
 
 
@@ -69,9 +68,9 @@ struct mg_obj
     struct lvl_obj *lvls;
     
     //kernels
-    cl_kernel       vtx_geo;
-    cl_kernel       vtx_prj;
-    cl_kernel       vtx_itp;
+    cl_kernel       ele_geo;
+    cl_kernel       ele_prj;
+    cl_kernel       ele_itp;
     
     //ops
     struct op_obj ops[1];

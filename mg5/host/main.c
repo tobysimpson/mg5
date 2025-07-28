@@ -21,7 +21,7 @@
 #include "io.h"
 
 
-//multigrid image test
+//multigrid voxel/element with image datatype
 int main(int argc, const char * argv[])
 {
     printf("hello\n");
@@ -64,17 +64,17 @@ int main(int argc, const char * argv[])
     struct lvl_obj *lvl = &mg.lvls[0];
                       
     //kernel
-    cl_kernel vtx_ini = clCreateKernel(ocl.program, "vtx_ini", &ocl.err);
+    cl_kernel ele_ini = clCreateKernel(ocl.program, "ele_ini", &ocl.err);
 
     //arg
-    ocl.err = clSetKernelArg(vtx_ini, 0, sizeof(struct msh_obj), &lvl->msh);
-    ocl.err = clSetKernelArg(vtx_ini, 1, sizeof(cl_mem)        , &lvl->gg);
-    ocl.err = clSetKernelArg(vtx_ini, 2, sizeof(cl_mem)        , &lvl->uu);
-    ocl.err = clSetKernelArg(vtx_ini, 3, sizeof(cl_mem)        , &lvl->bb);
-    ocl.err = clSetKernelArg(vtx_ini, 4, sizeof(cl_mem)        , &lvl->rr);
+    ocl.err = clSetKernelArg(ele_ini, 0, sizeof(struct msh_obj), &lvl->msh);
+    ocl.err = clSetKernelArg(ele_ini, 1, sizeof(cl_mem)        , &lvl->gg);
+    ocl.err = clSetKernelArg(ele_ini, 2, sizeof(cl_mem)        , &lvl->uu);
+    ocl.err = clSetKernelArg(ele_ini, 3, sizeof(cl_mem)        , &lvl->bb);
+    ocl.err = clSetKernelArg(ele_ini, 4, sizeof(cl_mem)        , &lvl->rr);
     
     //ini
-    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, vtx_ini, 3, NULL, lvl->vtx.n, NULL, 0, NULL, NULL);
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ele_ini, 3, NULL, lvl->ele.n, NULL, 0, NULL, NULL);
 
     //geom
     for(int l=0; l<mg.nl; l++)
@@ -84,26 +84,26 @@ int main(int argc, const char * argv[])
         
 //        //write
 //        wrt_xmf(&ocl, lvl, l, 0);
-//        wrt_img1(&ocl, lvl->gg, &lvl->vtx, "gg", l, 0);
-//        wrt_img1(&ocl, lvl->uu, &lvl->vtx, "uu", l, 0);
-//        wrt_img1(&ocl, lvl->bb, &lvl->vtx, "bb", l, 0);
-//        wrt_img1(&ocl, lvl->rr, &lvl->vtx, "rr", l, 0);
+//        wrt_img1(&ocl, lvl->gg, &lvl->ele, "gg", l, 0);
+//        wrt_img1(&ocl, lvl->uu, &lvl->ele, "uu", l, 0);
+//        wrt_img1(&ocl, lvl->bb, &lvl->ele, "bb", l, 0);
+//        wrt_img1(&ocl, lvl->rr, &lvl->ele, "rr", l, 0);
         
     }
     
     
     //solve
-    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 1000);
+    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 100);
     
     //write
     wrt_xmf(&ocl, lvl, 0, 0);
-    wrt_img1(&ocl, lvl->gg, &lvl->vtx, "gg", 0, 0);
-    wrt_img1(&ocl, lvl->uu, &lvl->vtx, "uu", 0, 0);
-    wrt_img1(&ocl, lvl->bb, &lvl->vtx, "bb", 0, 0);
-    wrt_img1(&ocl, lvl->rr, &lvl->vtx, "rr", 0, 0);
+    wrt_img1(&ocl, lvl->gg, &lvl->ele, "gg", 0, 0);
+    wrt_img1(&ocl, lvl->uu, &lvl->ele, "uu", 0, 0);
+    wrt_img1(&ocl, lvl->bb, &lvl->ele, "bb", 0, 0);
+    wrt_img1(&ocl, lvl->rr, &lvl->ele, "rr", 0, 0);
     
     //clean
-    ocl.err = clReleaseKernel(vtx_ini);
+    ocl.err = clReleaseKernel(ele_ini);
 
     mg_fin(&ocl, &mg);
     ocl_fin(&ocl);
