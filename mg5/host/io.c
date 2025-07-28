@@ -25,8 +25,8 @@ void wrt_xmf(struct ocl_obj *ocl, struct lvl_obj *lvl, int l, int f)
     fprintf(file1,"    <Topology name=\"topo\" TopologyType=\"3DCoRectMesh\" Dimensions=\"%zu %zu %zu\"></Topology>\n", lvl->ele.n[2]+1, lvl->ele.n[1]+1, lvl->ele.n[0]+1);
     fprintf(file1,"      <Geometry name=\"geo\" Type=\"ORIGIN_DXDYDZ\">\n");
     fprintf(file1,"        <!-- Origin -->\n");
-    fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", 0e0f, 0e0f, 0e0f);
-//    fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", -msh->dx*(msh->ne.x/2), -msh->dx*(msh->ne.y/2), -msh->dx*(msh->ne.z/2));  //origin at centre
+//    fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", 0e0f, 0e0f, 0e0f);
+    fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", -lvl->msh.dx*(lvl->ele.n[0]/2), -lvl->msh.dx*(lvl->ele.n[1]/2), -lvl->msh.dx*(lvl->ele.n[2]/2));  //origin at centre
     fprintf(file1,"        <!-- DxDyDz -->\n");
     fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", lvl->msh.dx, lvl->msh.dx, lvl->msh.dx);
     fprintf(file1,"      </Geometry>\n");

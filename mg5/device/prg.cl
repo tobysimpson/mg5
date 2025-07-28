@@ -104,7 +104,7 @@ kernel void ele_ini(const struct msh_obj  msh,
                     write_only image3d_t  rr)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
-    int4 dim = get_image_dim(uu);
+    int4 dim = get_image_dim(gg);
     
 //    float4 x = msh.dx*convert_float4(pos);
     
@@ -124,11 +124,13 @@ kernel void ele_geo(const       struct msh_obj  msh,
                     write_only  image3d_t       gg)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+    int4 dim = get_image_dim(gg);
     
-    float4 x = msh.dx*(convert_float4(pos) + 0.5f);
+//    float4 x = msh.dx*(convert_float4(pos) + 0.5f);
+    float4 x = msh.dx*(convert_float4(pos - dim/2) + 0.5f);
     
-    float g1 = sdf_sph(x,(float4){0.6f, 0.6f, 0.4f, 0.0f}, 0.25f);
-    float g2 = sdf_cub(x,(float4){0.4f, 0.4f, 0.6f, 0.0f}, (float4){0.25f, 0.25f, 0.25f, 0.0f});
+    float g1 = sdf_sph(x,(float4){+0.25f, +0.25f, -0.25f, 0.0f}, 0.5f);
+    float g2 = sdf_cub(x,(float4){-0.25f, -0.25f, +0.25f, 0.0f}, (float4){0.5f, 0.5f, 0.5f, 0.0f});
     float g = min(g1,g2);
     
     write_imagef(gg, pos, g);
