@@ -122,6 +122,17 @@ int main(int argc, const char * argv[])
     }
     
     
+//    clEnqueueCopyImage(ocl.command_queue, lf.uu, lf.rr, <#const size_t *#>, <#const size_t *#>, <#const size_t *#>, <#cl_uint#>, <#const cl_event *#>, <#cl_event *#>)
+//    clEnqueueFillImage(<#cl_command_queue#>, <#cl_mem#>, <#const void *#>, <#const size_t *#>, <#const size_t *#>, <#cl_uint#>, <#const cl_event *#>, <#cl_event *#>)
+    
+    //copy
+//    ocl.err = clEnqueueCopyBuffer(ocl.command_queue, lf.uu, pp, 0, 0, msh.ne_tot*sizeof(cl_float), 0, NULL, &ocl.event);
+  
+    //fill
+//    cl_float4 ptn = {0e0f,0e0f,0e0f,0e0f};
+//    ocl.err = clEnqueueFillBuffer(ocl.command_queue, vc, &ptn, sizeof(ptn), 0, msh.nv_tot*sizeof(ptn), 0, NULL, &ocl.event);
+    
+    
     //write all
     for(int l=0; l<mg.nl; l++)
     {

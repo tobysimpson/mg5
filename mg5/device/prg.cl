@@ -211,7 +211,7 @@ kernel void ele_jac(const struct msh_obj  msh,
 
 
 
-//project - sum
+//project (sum)
 kernel void ele_prj(read_only     image3d_t     rr,    //fine      (in)
                     write_only    image3d_t     uu,    //coarse    (out)
                     write_only    image3d_t     bb)    //coarse    (out)
@@ -236,35 +236,31 @@ kernel void ele_prj(read_only     image3d_t     rr,    //fine      (in)
 
     //store/reset
     write_imagef(uu, pos, 0e0f);
-    write_imagef(bb, pos, s);
+    write_imagef(bb, pos, s);    //avg?
 
     return;
 }
 
-/*
- 
 
 
-//interp - inject
-kernel void ele_itp(const  struct msh_obj   mshf,    //fine      (out)
-                   global float            *uuc,    //coarse    (in)
-                   global float            *uuf)    //fine      (out)
+
+//interp (inject)
+kernel void ele_itp(read_only   image3d_t   uuc,    //coarse    (in)
+                    read_only   image3d_t   rrf,    //fine      (in) holds uuf
+                    write_only  image3d_t   uuf)    //fine      (out)
 {
-   int3  ele_pos  = (int3){get_global_id(0), get_global_id(1), get_global_id(2)};
-   int   ele_idx  = utl_idx1(ele_pos, mshf.ne);   //fine
-   
-   //    printf("%2d %v3hlu\n", ele_idx, ele_pos/2);
-   
-   //coarse
-   int3 pos = ele_pos/2;
-   int3 dim = mshf.ne/2;
-   
-   //write - scale
-   uuf[ele_idx] += 0.125f*uuc[utl_idx1(pos, dim)];
-   
-   return;
+    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+
+    //read
+    float4 uf = read_imagef(rrf, pos);
+    float4 uc = read_imagef(uuc, pos/2);
+
+    //write
+    write_imagef(uuf, pos, uf + 0.125f*uc);  //avg
+
+    return;
 }
 
 
 
- */
+
