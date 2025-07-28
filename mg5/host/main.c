@@ -48,7 +48,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){1,1,1};
+    mg.le = (cl_int3){4,4,4};
     mg.nl = mg.le.x;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;
@@ -84,15 +84,8 @@ int main(int argc, const char * argv[])
     //geom
     for(int l=0; l<mg.nl; l++)
     {
-//        struct lvl_obj *lvl = &mg.lvls[l];
-//        mg_geo(&ocl, &mg, lvl);
-        
-//        //write
-//        wrt_xmf(&ocl, lvl, l, 0);
-//        wrt_img1(&ocl, lvl->gg, &lvl->ele, "gg", l, 0);
-//        wrt_img1(&ocl, lvl->uu, &lvl->ele, "uu", l, 0);
-//        wrt_img1(&ocl, lvl->bb, &lvl->ele, "bb", l, 0);
-//        wrt_img1(&ocl, lvl->rr, &lvl->ele, "rr", l, 0);
+        struct lvl_obj *lvl = &mg.lvls[l];
+        mg_geo(&ocl, &mg, lvl);
     }
     
     /*
@@ -102,7 +95,9 @@ int main(int argc, const char * argv[])
      */
     
     //solve
-//    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 100);
+    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 1000);
+    
+    /*
     
     //project
     for(int l=0; l<(mg.nl-1); l++)
@@ -118,26 +113,16 @@ int main(int argc, const char * argv[])
         
         //project
         ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.ele_prj, 3, NULL, lc->ele.n, NULL, 0, NULL, NULL);
-
     }
+     
+    */
     
     
-//    clEnqueueCopyImage(ocl.command_queue, lf.uu, lf.rr, <#const size_t *#>, <#const size_t *#>, <#const size_t *#>, <#cl_uint#>, <#const cl_event *#>, <#cl_event *#>)
-    
-    cl_float4 ptn = {2.0f, 0.0f, 0.0f, 0.0f};
-    clEnqueueFillImage(ocl.command_queue, lvl->uu, &ptn, mg.ogn, lvl->ele.n, 0, NULL, NULL);
-    
-    
-    clEnqueueCopyImage(ocl.command_queue, lvl->uu, lvl->rr, mg.ogn, mg.ogn, lvl->ele.n, 0, NULL, NULL);
+    //fill/copy
+//    cl_float4 ptn = {3.0f, 0.0f, 0.0f, 0.0f};
+//    clEnqueueFillImage(ocl.command_queue, lvl->uu, &ptn, mg.ogn, lvl->ele.n, 0, NULL, NULL);
+//    clEnqueueCopyImage(ocl.command_queue, lvl->uu, lvl->rr, mg.ogn, mg.ogn, lvl->ele.n, 0, NULL, NULL);
         
-    
-    //copy
-//    ocl.err = clEnqueueCopyBuffer(ocl.command_queue, lf.uu, pp, 0, 0, msh.ne_tot*sizeof(cl_float), 0, NULL, &ocl.event);
-  
-    //fill
-//    cl_float4 ptn = {0e0f,0e0f,0e0f,0e0f};
-//    ocl.err = clEnqueueFillBuffer(ocl.command_queue, vc, &ptn, sizeof(ptn), 0, msh.nv_tot*sizeof(ptn), 0, NULL, &ocl.event);
-    
     
     //write all
     for(int l=0; l<mg.nl; l++)
@@ -151,8 +136,6 @@ int main(int argc, const char * argv[])
         wrt_img1(&ocl, lvl->bb, &lvl->ele, "bb", l, 0);
         wrt_img1(&ocl, lvl->rr, &lvl->ele, "rr", l, 0);
     }
-    
-    
     
 
 //    //write fine
@@ -174,8 +157,8 @@ int main(int argc, const char * argv[])
     mg_fin(&ocl, &mg);
     ocl_fin(&ocl);
     
+    //timer
     clock_gettime(CLOCK_REALTIME, &t1);
-
     printf("%f\n", (1e9f*(t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec))*1e-9);
     
     printf("done\n");

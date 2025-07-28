@@ -41,7 +41,7 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         lvl->msh.dx2        = lvl->msh.dx*lvl->msh.dx;
         lvl->msh.rdx2       = 1e0f/lvl->msh.dx2;
         
-        printf("lvl %d [%d,%d,%d] [%2zu,%2zu,%2zu] %4zu %f %f\n", l,
+        printf("lvl %d [%d,%d,%d] [%2zu,%2zu,%2zu] %6zu %f %f\n", l,
                lvl->le.x,
                lvl->le.y,
                lvl->le.z,
@@ -101,7 +101,7 @@ void mg_geo(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lvl)
     ocl->err = clSetKernelArg(mg->ele_geo,  1, sizeof(cl_mem),            (void*)&lvl->gg);
     
     //geo
-    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->ele_geo, 3, NULL, lvl->ele.n, NULL, 0, NULL, &ocl->event);
+    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->ele_geo, 3, mg->ogn, lvl->ele.n, NULL, 0, NULL, &ocl->event);
 
     return;
 }

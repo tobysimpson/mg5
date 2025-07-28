@@ -125,7 +125,7 @@ kernel void ele_ini(const struct msh_obj  msh,
     
     float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
     
-    write_imagef(gg, pos, pos.x);
+    write_imagef(gg, pos, 0.0f);
     write_imagef(uu, pos, u);
     write_imagef(bb, pos, 0.0f);
     write_imagef(rr, pos, u);           //bounds here too
