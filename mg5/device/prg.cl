@@ -54,7 +54,22 @@ int utl_bnd(int4 pos, int4 dim)
  ============================
  */
 
+//read global scalar 2x2x2
+void mem_rgs2(read_only image3d_t uu, float4 uu2[8], int4 pos)
+{
+    uu2[0] = read_imagef(uu, pos + (int4){0,0,0,0});
+    uu2[1] = read_imagef(uu, pos + (int4){1,0,0,0});
+    uu2[2] = read_imagef(uu, pos + (int4){0,1,0,0});
+    uu2[3] = read_imagef(uu, pos + (int4){1,1,0,0});
+    uu2[4] = read_imagef(uu, pos + (int4){0,0,1,0});
+    uu2[5] = read_imagef(uu, pos + (int4){1,0,1,0});
+    uu2[6] = read_imagef(uu, pos + (int4){0,1,1,0});
+    uu2[7] = read_imagef(uu, pos + (int4){1,1,1,0});
 
+    return;
+}
+
+//read global scalar 6-point stencil
 void mem_rgs6(read_only image3d_t uu, float4 ss[6], int4 pos)
 {
     ss[0] = read_imagef(uu, pos - (int4){1,0,0,0});
@@ -106,11 +121,11 @@ kernel void ele_ini(const struct msh_obj  msh,
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
     int4 dim = get_image_dim(gg);
     
-//    float4 x = msh.dx*convert_float4(pos);
+//   float4 x = msh.dx*(convert_float4(pos - dim/2) + 0.5f);
     
     float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
     
-    write_imagef(gg, pos, 1.0f);
+    write_imagef(gg, pos, pos.x);
     write_imagef(uu, pos, u);
     write_imagef(bb, pos, 0.0f);
     write_imagef(rr, pos, u);           //bounds here too
@@ -126,7 +141,6 @@ kernel void ele_geo(const       struct msh_obj  msh,
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
     int4 dim = get_image_dim(gg);
     
-//    float4 x = msh.dx*(convert_float4(pos) + 0.5f);
     float4 x = msh.dx*(convert_float4(pos - dim/2) + 0.5f);
     
     float g1 = sdf_sph(x,(float4){+0.25f, +0.25f, -0.25f, 0.0f}, 0.5f);
@@ -173,9 +187,9 @@ kernel void ele_jac(const struct msh_obj  msh,
         //arms
         for(int i=0; i<6; i++)
         {
-//            float g1 = (gg6[i].x>0.0f); //invert
-            d += 1.0f;
-            s -= uu6[i].x;
+            float g1 = (gg6[i].x>0.0f); //invert
+            d += g1*1.0f;
+            s -= g1*uu6[i].x;
         }
         
         
@@ -195,39 +209,40 @@ kernel void ele_jac(const struct msh_obj  msh,
  */
 
 
-/*
+
 
 //project - sum
-kernel void ele_prj(const  struct msh_obj   mshc,    //coarse    (out)
-                   global float            *rrf,    //fine      (in)
-                   global float            *uuc,    //coarse    (out)
-                   global float            *bbc)    //coarse    (out)
+kernel void ele_prj(read_only     image3d_t     rr,    //fine      (in)
+                    write_only    image3d_t     uu,    //coarse    (out)
+                    write_only    image3d_t     bb)    //coarse    (out)
 {
-   int3  ele_pos  = (int3){get_global_id(0), get_global_id(1), get_global_id(2)};
-   int   ele_idx  = utl_idx(ele_pos, mshc.ne);
-   
-   
-   //fine
-   int3 pos = 2*ele_pos;
-   int3 dim = 2*mshc.ne;
-   
-   //sum
-   float s = 0e0f;
-   
-   //sum fine
-   for(int i=0; i<8; i++)
-   {
-       int3 adj_pos = pos + off_ele[i];
-       int  adj_idx = utl_idx1(adj_pos, dim);
-       s += rrf[adj_idx];
-   }
-   
-   //store/reset
-   uuc[ele_idx] = 0e0f;
-   bbc[ele_idx] = s;
-   
-   return;
+    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+
+    //fine
+    int4 posf = 2*pos;
+
+    //read
+    float4 rr2[8];
+    mem_rgs2(rr, rr2, posf);
+    
+    //sum
+    float4 s = 0e0f;
+
+    //sum fine
+    for(int i=0; i<8; i++)
+    {
+        s += rr2[i];
+    }
+
+    //store/reset
+    write_imagef(uu, pos, 0e0f);
+    write_imagef(bb, pos, s);
+
+    return;
 }
+
+/*
+ 
 
 
 //interp - inject
@@ -251,4 +266,5 @@ kernel void ele_itp(const  struct msh_obj   mshf,    //fine      (out)
 }
 
 
-*/
+
+ */
