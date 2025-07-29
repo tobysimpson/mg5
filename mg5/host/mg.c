@@ -231,7 +231,7 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
             //post
             mg_jac(ocl, mg, op, lf, nj);
             
-        } //dsc
+        } //asc
         
     } //cycle
     
