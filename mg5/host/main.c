@@ -83,7 +83,7 @@ int main(int argc, const char * argv[])
     
     
 //    mg_geo(&ocl, &mg, lvl);
-    mg_geo(&ocl, &mg, &mg.lvls[mg.nl-1]);
+//    mg_geo(&ocl, &mg, &mg.lvls[mg.nl-1]);
     
 //    //geom
 //    for(int l=0; l<mg.nl; l++)
@@ -91,6 +91,21 @@ int main(int argc, const char * argv[])
 //        struct lvl_obj *lvl = &mg.lvls[l];
 //        mg_geo(&ocl, &mg, lvl);
 //    }
+    
+    //project
+    for(int l=0; l<(mg.nl-1); l++)
+    {
+        //levels
+        struct lvl_obj *lf = &mg.lvls[l];
+        struct lvl_obj *lc = &mg.lvls[l+1];
+
+        //args
+        ocl.err = clSetKernelArg(mg.vxl_prj,  0, sizeof(cl_mem),            (void*)&lf->gg);      //fine
+        ocl.err = clSetKernelArg(mg.vxl_prj,  1, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
+
+        //project
+        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_prj, 3, mg.ogn, lc->vxl.n, NULL, 0, NULL, NULL);
+    }
     
     /*
      ====================
@@ -103,36 +118,24 @@ int main(int argc, const char * argv[])
     
 
     
-//    //project
-//    for(int l=0; l<(mg.nl-1); l++)
+
+     
+    
+//    //interp
+//    for(int l=(mg.nl-2); l>=0; l--)
 //    {
 //        //levels
 //        struct lvl_obj *lf = &mg.lvls[l];
 //        struct lvl_obj *lc = &mg.lvls[l+1];
-//        
+//
 //        //args
-//        ocl.err = clSetKernelArg(mg.vxl_prj,  0, sizeof(cl_mem),            (void*)&lf->gg);      //fine
-//        ocl.err = clSetKernelArg(mg.vxl_prj,  1, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
+//        ocl.err = clSetKernelArg(mg.vxl_itp,  0, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
+//        ocl.err = clSetKernelArg(mg.vxl_itp,  1, sizeof(cl_mem),            (void*)&lf->gg);      //fine
+//        ocl.err = clSetKernelArg(mg.vxl_itp,  2, sizeof(cl_mem),            (void*)&lf->rr);      //fine
 //        
-//        //project
-//        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_prj, 3, mg.ogn, lc->vxl.n, NULL, 0, NULL, NULL);
+//        //interp
+//        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_itp, 3, mg.ogn, lf->vxl.n, NULL, 0, NULL, NULL);
 //    }
-     
-    
-    //ascend
-    for(int l=(mg.nl-2); l>=0; l--)
-    {
-        //levels
-        struct lvl_obj *lf = &mg.lvls[l];
-        struct lvl_obj *lc = &mg.lvls[l+1];
-
-        //args
-        ocl.err = clSetKernelArg(mg.vxl_itp,  0, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
-        ocl.err = clSetKernelArg(mg.vxl_itp,  1, sizeof(cl_mem),            (void*)&lf->gg);      //fine
-        
-        //interp
-        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_itp, 3, mg.ogn, lf->vxl.n, NULL, 0, NULL, NULL);
-    }
 
     
     

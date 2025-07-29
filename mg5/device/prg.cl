@@ -45,7 +45,13 @@ int utl_idx(int4 pos, int4 dim)
 //in-bounds
 int utl_bnd(int4 pos, int4 dim)
 {
-    return all(pos.xyz>=0)*all(pos.xyz<dim.xyz);
+    return all(pos.xyz>=0)&&all(pos.xyz<dim.xyz);
+}
+
+//on the border
+int utl_brd(int4 pos, int4 dim)
+{
+    return any(pos.xyz==0)||any(pos.xyz==(dim.xyz-1));
 }
 
 /*
@@ -121,13 +127,15 @@ kernel void vxl_ini(const struct msh_obj  msh,
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
     int4 dim = get_image_dim(gg);
     
-//   float4 x = msh.dx*(convert_float4(pos - (dim-1)/2) + 0.5f);
+   float4 x = msh.dx*(convert_float4(pos - (dim-1)/2) + 0.5f);
     
-    float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
+//    float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
     
-    write_imagef(gg, pos, 0e0f);
-    write_imagef(uu, pos, u);
-    write_imagef(bb, pos, 0.0f);
+    float g = utl_brd(pos, dim);
+    
+    write_imagef(gg, pos, g);
+    write_imagef(uu, pos, g*sin(x.x));
+    write_imagef(bb, pos, sin(x.x));
     write_imagef(rr, pos, 0.0f);
 
     return;
@@ -170,7 +178,7 @@ kernel void vxl_jac(const struct msh_obj  msh,
     float4 b = read_imagef(bb, pos);
     float4 g = read_imagef(gg, pos);
     
-    if(g.x>0.0f)
+    if(g.x<=0.0f)
     {
         //stencil
         float4 gg6[6];
@@ -191,7 +199,6 @@ kernel void vxl_jac(const struct msh_obj  msh,
             s -= g1*uu6[i].x;
         }
         
-        
         float4 r;
         r.x = (msh.dx2*b.x - s)/d;
         
@@ -208,7 +215,7 @@ kernel void vxl_jac(const struct msh_obj  msh,
  */
 
 
-//project (injection)
+//project (inject)
 kernel void vxl_prj(read_only     image3d_t     rr,    //fine
                     write_only    image3d_t     bb)    //coarse
 {
@@ -227,59 +234,22 @@ kernel void vxl_prj(read_only     image3d_t     rr,    //fine
 }
 
 
-/*
- 
- //interpolate
- kernel void vtx_itp(const  struct msh_obj   msh,    //fine      (out)
-                     global float            *u0,    //coarse    (in)
-                     global float            *u1)    //fine      (out)
- {
-     int3  vtx_pos  = (int3){get_global_id(0), get_global_id(1), get_global_id(2)} + 1; //fine - interior
-     int   vtx_idx  = utl_idx1(vtx_pos, msh.nv);   //fine
-     
-     //coarse
-     float3 pos = convert_float3(vtx_pos)/2e0f;
-     
-     //round up/down
-     int3 pos0 = convert_int3(floor(pos));
-     int3 pos1 = convert_int3(ceil(pos));
-     
-     //coarse dims
-     int3 dim = 1 + msh.ne/2;
-     
-     //sum
-     float s = 0e0f;
-     s += u0[utl_idx1((int3){pos0.x, pos0.y, pos0.z}, dim)];
-     s += u0[utl_idx1((int3){pos1.x, pos0.y, pos0.z}, dim)];
-     s += u0[utl_idx1((int3){pos0.x, pos1.y, pos0.z}, dim)];
-     s += u0[utl_idx1((int3){pos1.x, pos1.y, pos0.z}, dim)];
-     s += u0[utl_idx1((int3){pos0.x, pos0.y, pos1.z}, dim)];
-     s += u0[utl_idx1((int3){pos1.x, pos0.y, pos1.z}, dim)];
-     s += u0[utl_idx1((int3){pos0.x, pos1.y, pos1.z}, dim)];
-     s += u0[utl_idx1((int3){pos1.x, pos1.y, pos1.z}, dim)];
-     
-     u1[vtx_idx] += s*0.125f;
-     
-     return;
- }
- 
- */
-
-
 
 //interpolate
 kernel void vxl_itp(read_only   image3d_t   uuc,    //coarse    (in)
-//                    read_only   image3d_t   rrf,    //fine      (in) holds uuf
-                    write_only  image3d_t   uuf)    //fine      (out)
+                    write_only  image3d_t   uuf,    //fine      (out)
+                    read_only   image3d_t   rrf)    //fine      (in) holds uuf
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
     
-    //coarse, round
+    //coarse
     float4 posc = 0.5f*convert_float4(pos);
+    
+    //round
     int4 pos0 = convert_int4(floor(posc));
     int4 pos1 = convert_int4(ceil(posc));
     
-    
+    //sum
     float4 s = 0.0f;
     s += read_imagef(uuc, (int4){pos0.x, pos0.y, pos0.z, 0});
     s += read_imagef(uuc, (int4){pos1.x, pos0.y, pos0.z, 0});
@@ -289,9 +259,12 @@ kernel void vxl_itp(read_only   image3d_t   uuc,    //coarse    (in)
     s += read_imagef(uuc, (int4){pos1.x, pos0.y, pos1.z, 0});
     s += read_imagef(uuc, (int4){pos0.x, pos1.y, pos1.z, 0});
     s += read_imagef(uuc, (int4){pos1.x, pos1.y, pos1.z, 0});
+    
+    //read
+    float4 r = read_imagef(rrf, pos);
 
     //write
-    write_imagef(uuf, pos, 0.125f*s);  //avg
+    write_imagef(uuf, pos, r + 0.125f*s);  //avg
 
     return;
 }
