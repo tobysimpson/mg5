@@ -112,7 +112,7 @@ float sdf_cub(float4 x, float4 c, float4 r)
 
 
 //ini
-kernel void ele_ini(const struct msh_obj  msh,
+kernel void vxl_ini(const struct msh_obj  msh,
                     write_only image3d_t  gg,
                     write_only image3d_t  uu,
                     write_only image3d_t  bb,
@@ -135,7 +135,7 @@ kernel void ele_ini(const struct msh_obj  msh,
 
 
 //geom
-kernel void ele_geo(const       struct msh_obj  msh,
+kernel void vxl_geo(const       struct msh_obj  msh,
                     write_only  image3d_t       gg)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
@@ -159,7 +159,7 @@ kernel void ele_geo(const       struct msh_obj  msh,
  */
 
 //jacobi
-kernel void ele_jac(const struct msh_obj  msh,
+kernel void vxl_jac(const struct msh_obj  msh,
                     read_only     image3d_t       gg,
                     read_only     image3d_t       uu,
                     read_only     image3d_t       bb,
@@ -209,57 +209,114 @@ kernel void ele_jac(const struct msh_obj  msh,
  */
 
 
-
-
-//project (sum)
-kernel void ele_prj(read_only     image3d_t     rr,    //fine      (in)
-                    write_only    image3d_t     uu,    //coarse    (out)
-                    write_only    image3d_t     bb)    //coarse    (out)
+//project (inject)
+kernel void vtx_prj(read_only     image3d_t     rr,    //fine
+                    write_only    image3d_t     bb)    //coarse
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
 
     //fine
     int4 posf = 2*pos;
-
-    //read
-    float4 rr2[8];
-    mem_rgs2(rr, rr2, posf);
     
-    //sum
-    float4 s = 0e0f;
-
-    //sum fine
-    for(int i=0; i<8; i++)
-    {
-        s += rr2[i];
-    }
-
-    //store/reset
-    write_imagef(uu, pos, 0e0f);
-    write_imagef(bb, pos, s);    //avg?
-
-    return;
-}
-
-
-
-
-//interp (inject)
-kernel void ele_itp(read_only   image3d_t   uuc,    //coarse    (in)
-                    read_only   image3d_t   rrf,    //fine      (in) holds uuf
-                    write_only  image3d_t   uuf)    //fine      (out)
-{
-    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
-
     //read
-    float4 uf = read_imagef(rrf, pos);
-    float4 uc = read_imagef(uuc, pos/2);
-
+    float4 r = read_imagef(rr, posf);
+    
     //write
-    write_imagef(uuf, pos, uf + 0.125f*uc);  //avg
+    write_imagef(bb, pos, r);
 
     return;
 }
+
+
+/*
+ 
+ //interpolate
+ kernel void vtx_itp(const  struct msh_obj   msh,    //fine      (out)
+                     global float            *u0,    //coarse    (in)
+                     global float            *u1)    //fine      (out)
+ {
+     int3  vtx_pos  = (int3){get_global_id(0), get_global_id(1), get_global_id(2)} + 1; //fine - interior
+     int   vtx_idx  = utl_idx1(vtx_pos, msh.nv);   //fine
+     
+     //coarse
+     float3 pos = convert_float3(vtx_pos)/2e0f;
+     
+     //round up/down
+     int3 pos0 = convert_int3(floor(pos));
+     int3 pos1 = convert_int3(ceil(pos));
+     
+     //coarse dims
+     int3 dim = 1 + msh.ne/2;
+     
+     //sum
+     float s = 0e0f;
+     s += u0[utl_idx1((int3){pos0.x, pos0.y, pos0.z}, dim)];
+     s += u0[utl_idx1((int3){pos1.x, pos0.y, pos0.z}, dim)];
+     s += u0[utl_idx1((int3){pos0.x, pos1.y, pos0.z}, dim)];
+     s += u0[utl_idx1((int3){pos1.x, pos1.y, pos0.z}, dim)];
+     s += u0[utl_idx1((int3){pos0.x, pos0.y, pos1.z}, dim)];
+     s += u0[utl_idx1((int3){pos1.x, pos0.y, pos1.z}, dim)];
+     s += u0[utl_idx1((int3){pos0.x, pos1.y, pos1.z}, dim)];
+     s += u0[utl_idx1((int3){pos1.x, pos1.y, pos1.z}, dim)];
+     
+     u1[vtx_idx] += s*0.125f;
+     
+     return;
+ }
+ 
+ */
+
+
+
+////project (sum)
+//kernel void vxl_prj(read_only     image3d_t     rr,    //fine      (in)
+//                    write_only    image3d_t     uu,    //coarse    (out)
+//                    write_only    image3d_t     bb)    //coarse    (out)
+//{
+//    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+//
+//    //fine
+//    int4 posf = 2*pos;
+//
+//    //read
+//    float4 rr2[8];
+//    mem_rgs2(rr, rr2, posf);
+//    
+//    //sum
+//    float4 s = 0e0f;
+//
+//    //sum fine
+//    for(int i=0; i<8; i++)
+//    {
+//        s += rr2[i];
+//    }
+//
+//    //store/reset
+//    write_imagef(uu, pos, 0e0f);
+//    write_imagef(bb, pos, s);    //avg?
+//
+//    return;
+//}
+
+
+
+
+////interp (inject)
+//kernel void vxl_itp(read_only   image3d_t   uuc,    //coarse    (in)
+//                    read_only   image3d_t   rrf,    //fine      (in) holds uuf
+//                    write_only  image3d_t   uuf)    //fine      (out)
+//{
+//    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+//
+//    //read
+//    float4 uf = read_imagef(rrf, pos);
+//    float4 uc = read_imagef(uuc, pos/2);
+//
+//    //write
+//    write_imagef(uuf, pos, uf + 0.125f*uc);  //avg
+//
+//    return;
+//}
 
 
 

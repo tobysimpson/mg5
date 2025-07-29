@@ -21,7 +21,7 @@
 #include "io.h"
 
 
-//multigrid voxel/element with image datatype
+//multigrid voxel/image
 int main(int argc, const char * argv[])
 {
     printf("hello\n");
@@ -48,7 +48,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){4,4,4};
+    mg.le = (cl_int3){3,3,3};
     mg.nl = mg.le.x;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;
@@ -63,17 +63,17 @@ int main(int argc, const char * argv[])
     struct lvl_obj *lvl = &mg.lvls[0];
                       
     //kernel
-    cl_kernel ele_ini = clCreateKernel(ocl.program, "ele_ini", &ocl.err);
+    cl_kernel vxl_ini = clCreateKernel(ocl.program, "vxl_ini", &ocl.err);
 
     //arg
-    ocl.err = clSetKernelArg(ele_ini, 0, sizeof(struct msh_obj), &lvl->msh);
-    ocl.err = clSetKernelArg(ele_ini, 1, sizeof(cl_mem)        , &lvl->gg);
-    ocl.err = clSetKernelArg(ele_ini, 2, sizeof(cl_mem)        , &lvl->uu);
-    ocl.err = clSetKernelArg(ele_ini, 3, sizeof(cl_mem)        , &lvl->bb);
-    ocl.err = clSetKernelArg(ele_ini, 4, sizeof(cl_mem)        , &lvl->rr);
+    ocl.err = clSetKernelArg(vxl_ini, 0, sizeof(struct msh_obj), &lvl->msh);
+    ocl.err = clSetKernelArg(vxl_ini, 1, sizeof(cl_mem)        , &lvl->gg);
+    ocl.err = clSetKernelArg(vxl_ini, 2, sizeof(cl_mem)        , &lvl->uu);
+    ocl.err = clSetKernelArg(vxl_ini, 3, sizeof(cl_mem)        , &lvl->bb);
+    ocl.err = clSetKernelArg(vxl_ini, 4, sizeof(cl_mem)        , &lvl->rr);
     
     //ini
-    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, ele_ini, 3, NULL, lvl->ele.n, NULL, 0, NULL, NULL);
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, vxl_ini, 3, NULL, lvl->vxl.n, NULL, 0, NULL, NULL);
 
     /*
      ====================
@@ -107,12 +107,12 @@ int main(int argc, const char * argv[])
         struct lvl_obj *lc = &mg.lvls[l+1];
         
         //args
-        ocl.err = clSetKernelArg(mg.ele_prj,  0, sizeof(cl_mem),            (void*)&lf->gg);      //fine
-        ocl.err = clSetKernelArg(mg.ele_prj,  1, sizeof(cl_mem),            (void*)&lc->uu);      //coarse
-        ocl.err = clSetKernelArg(mg.ele_prj,  2, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
+        ocl.err = clSetKernelArg(mg.vxl_prj,  0, sizeof(cl_mem),            (void*)&lf->gg);      //fine
+        ocl.err = clSetKernelArg(mg.vxl_prj,  1, sizeof(cl_mem),            (void*)&lc->uu);      //coarse
+        ocl.err = clSetKernelArg(mg.vxl_prj,  2, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
         
         //project
-        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.ele_prj, 3, NULL, lc->ele.n, NULL, 0, NULL, NULL);
+        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_prj, 3, NULL, lc->vxl.n, NULL, 0, NULL, NULL);
     }
      
     */
@@ -120,8 +120,8 @@ int main(int argc, const char * argv[])
     
     //fill/copy
 //    cl_float4 ptn = {3.0f, 0.0f, 0.0f, 0.0f};
-//    clEnqueueFillImage(ocl.command_queue, lvl->uu, &ptn, mg.ogn, lvl->ele.n, 0, NULL, NULL);
-//    clEnqueueCopyImage(ocl.command_queue, lvl->uu, lvl->rr, mg.ogn, mg.ogn, lvl->ele.n, 0, NULL, NULL);
+//    clEnqueueFillImage(ocl.command_queue, lvl->uu, &ptn, mg.ogn, lvl->vxl.n, 0, NULL, NULL);
+//    clEnqueueCopyImage(ocl.command_queue, lvl->uu, lvl->rr, mg.ogn, mg.ogn, lvl->vxl.n, 0, NULL, NULL);
         
     
     //write all
@@ -131,19 +131,19 @@ int main(int argc, const char * argv[])
 
         //write
         wrt_xmf(&ocl, lvl, l, 0);
-        wrt_img1(&ocl, lvl->gg, &lvl->ele, "gg", l, 0);
-        wrt_img1(&ocl, lvl->uu, &lvl->ele, "uu", l, 0);
-        wrt_img1(&ocl, lvl->bb, &lvl->ele, "bb", l, 0);
-        wrt_img1(&ocl, lvl->rr, &lvl->ele, "rr", l, 0);
+        wrt_img(&ocl, lvl->gg, &lvl->vxl, "gg", l, 0);
+        wrt_img(&ocl, lvl->uu, &lvl->vxl, "uu", l, 0);
+        wrt_img(&ocl, lvl->bb, &lvl->vxl, "bb", l, 0);
+        wrt_img(&ocl, lvl->rr, &lvl->vxl, "rr", l, 0);
     }
     
 
 //    //write fine
 //    wrt_xmf(&ocl, lvl, 0, 0);
-//    wrt_img1(&ocl, lvl->gg, &lvl->ele, "gg", 0, 0);
-//    wrt_img1(&ocl, lvl->uu, &lvl->ele, "uu", 0, 0);
-//    wrt_img1(&ocl, lvl->bb, &lvl->ele, "bb", 0, 0);
-//    wrt_img1(&ocl, lvl->rr, &lvl->ele, "rr", 0, 0);
+//    wrt_img1(&ocl, lvl->gg, &lvl->vxl, "gg", 0, 0);
+//    wrt_img1(&ocl, lvl->uu, &lvl->vxl, "uu", 0, 0);
+//    wrt_img1(&ocl, lvl->bb, &lvl->vxl, "bb", 0, 0);
+//    wrt_img1(&ocl, lvl->rr, &lvl->vxl, "rr", 0, 0);
     
     /*
      ====================
@@ -152,7 +152,7 @@ int main(int argc, const char * argv[])
      */
     
     //clean
-    ocl.err = clReleaseKernel(ele_ini);
+    ocl.err = clReleaseKernel(vxl_ini);
 
     mg_fin(&ocl, &mg);
     ocl_fin(&ocl);
