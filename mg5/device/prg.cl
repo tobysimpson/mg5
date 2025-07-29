@@ -187,7 +187,7 @@ kernel void vxl_jac(const struct msh_obj  msh,
     float4 b = read_imagef(bb, pos);
     float4 u = read_imagef(uu, pos);
     
-    //deom
+    //geom
     if(g.x<=0.0f)
     {
         //domain
@@ -219,6 +219,57 @@ kernel void vxl_jac(const struct msh_obj  msh,
     return;
 }
 
+
+//residual
+kernel void vxl_res(const struct msh_obj  msh,
+                    read_only     image3d_t       gg,
+                    read_only     image3d_t       bb,
+                    read_only     image3d_t       uu,
+                    write_only    image3d_t       rr)
+{
+    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+    int4 dim = get_image_dim(gg);
+    
+    //read
+    float4 g = read_imagef(gg, pos);
+    float4 b = read_imagef(bb, pos);
+    float4 u = read_imagef(uu, pos);
+    float4 r = 0.0f;
+    
+    //geom
+    if(g.x<=0.0f)
+    {
+        //domain
+        int bb6[6];
+        utl_bnd6(bb6, pos, dim);
+        
+        //soln
+        float4 uu6[6];
+        mem_rgs6(uu, uu6, pos);
+        
+        //sum,diag
+        float s = 0e0f;
+        float d = 0e0f;
+        
+        //stencil
+        for(int i=0; i<6; i++)
+        {
+            d -= bb6[i];
+            s += bb6[i]*uu6[i].x;
+        }
+        
+        //res
+        r = b.x - msh.rdx2*(s + d*u.x);
+    }
+    
+    //write
+    write_imagef(rr, pos, r);
+    
+    return;
+}
+
+
+
 /*
  ============================
  transfer
@@ -226,7 +277,7 @@ kernel void vxl_jac(const struct msh_obj  msh,
  */
 
 
-//project (inject)
+//project
 kernel void vxl_prj(read_only     image3d_t     rr,    //fine
                     write_only    image3d_t     bb)    //coarse
 {

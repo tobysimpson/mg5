@@ -48,8 +48,8 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){4,4,4};
-    mg.nl = mg.le.x;
+    mg.le = (cl_int3){6,6,6};
+    mg.nl = mg.le.x - 2;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;
     mg_ini(&ocl, &mg);
@@ -103,7 +103,13 @@ int main(int argc, const char * argv[])
      */
     
     //solve
-    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 100);
+//    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 10);
+    
+    //res
+//    mg_res(&ocl, &mg, &mg.ops[0], &mg.lvls[0]);
+    
+    //cyc nl,nj,nc
+    mg_cyc(&ocl, &mg, &mg.ops[0], mg.nl, 5, 10);
     
     //jac
 //    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);

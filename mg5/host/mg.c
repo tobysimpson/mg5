@@ -133,7 +133,7 @@ void mg_res(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, struct lv
     ocl->err = clSetKernelArg(op->vxl_res,  4, sizeof(cl_mem),            (void*)&lvl->rr);
     
     //residual
-    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, op->vxl_res, 3, mg->off, lvl->vxl.i, NULL, 0, NULL, NULL);
+    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, op->vxl_res, 3, mg->ogn, lvl->vxl.n, NULL, 0, NULL, NULL);
 
     return;
 }
@@ -143,20 +143,18 @@ void mg_res(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, struct lv
 void mg_prj(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lf, struct lvl_obj *lc)
 {
     //args
-    ocl->err = clSetKernelArg(mg->vxl_prj,  0, sizeof(struct msh_obj),    (void*)&lc->msh);     //coarse
-    ocl->err = clSetKernelArg(mg->vxl_prj,  1, sizeof(cl_mem),            (void*)&lf->rr);      //fine
-    ocl->err = clSetKernelArg(mg->vxl_prj,  2, sizeof(cl_mem),            (void*)&lc->uu);      //coarse
-    ocl->err = clSetKernelArg(mg->vxl_prj,  3, sizeof(cl_mem),            (void*)&lc->bb);      //coarse
-    
+    ocl->err = clSetKernelArg(mg->vxl_prj,  0, sizeof(cl_mem),            (void*)&lf->rr);      //fine
+    ocl->err = clSetKernelArg(mg->vxl_prj,  1, sizeof(cl_mem),            (void*)&lc->bb);      //coarse
+
     //project
-    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->vxl_prj, 3, NULL, lc->vxl.i, NULL, 0, NULL, NULL);
+    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->vxl_prj, 3, mg->ogn, lc->vxl.n, NULL, 0, NULL, NULL);
     
-//    //args
-//    ocl.err = clSetKernelArg(mg.vxl_prj,  0, sizeof(cl_mem),            (void*)&lf->gg);      //fine
-//    ocl.err = clSetKernelArg(mg.vxl_prj,  1, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
-//
-//    //project
-//    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_prj, 3, mg.ogn, lc->vxl.n, NULL, 0, NULL, NULL);
+    //store soln
+    ocl->err = clEnqueueCopyImage(ocl->command_queue, lf->uu, lf->rr, mg->ogn, mg->ogn, lf->vxl.n, 0, NULL, NULL);
+    
+    //clear coarse soln
+    cl_float4 ptn = {0.0f, 0.0f, 0.0f, 0.0f};
+    clEnqueueFillImage(ocl->command_queue, lc->uu, &ptn, mg->ogn, lc->vxl.n, 0, NULL, NULL);
     
     return;
 }
@@ -166,27 +164,13 @@ void mg_prj(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lf, struct l
 void mg_itp(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lf, struct lvl_obj *lc)
 {
     //args
-    ocl->err = clSetKernelArg(mg->vxl_prj,  0, sizeof(cl_mem),            (void*)&lf->gg);      //fine
-    ocl->err = clSetKernelArg(mg->vxl_prj,  1, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
-    
+    ocl->err = clSetKernelArg(mg->vxl_itp,  0, sizeof(cl_mem),            (void*)&lc->uu);      //coarse
+    ocl->err = clSetKernelArg(mg->vxl_itp,  1, sizeof(cl_mem),            (void*)&lf->uu);      //fine
+    ocl->err = clSetKernelArg(mg->vxl_itp,  2, sizeof(cl_mem),            (void*)&lf->rr);      //fine (soln stored)
+
     //interp
-    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->vxl_itp, 3, mg->off, lf->vxl.i, NULL, 0, NULL, NULL);
-    
-    //store
-    ocl->err = clEnqueueCopyImage(ocl->command_queue, lf->uu, lf->rr, mg->ogn, mg->ogn, lf->vxl.n, 0, NULL, NULL);
-    
-    //clear
-    cl_float4 ptn = {0.0f, 0.0f, 0.0f, 0.0f};
-    clEnqueueFillImage(ocl->command_queue, lc->uu, &ptn, mg->ogn, lc->vxl.n, 0, NULL, NULL);
-    
-    //        //args
-    //        ocl.err = clSetKernelArg(mg.vxl_itp,  0, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
-    //        ocl.err = clSetKernelArg(mg.vxl_itp,  1, sizeof(cl_mem),            (void*)&lf->gg);      //fine
-    //        ocl.err = clSetKernelArg(mg.vxl_itp,  2, sizeof(cl_mem),            (void*)&lf->rr);      //fine
-    //
-    //        //interp
-    //        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_itp, 3, mg.ogn, lf->vxl.n, NULL, 0, NULL, NULL);
-    
+    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->vxl_itp, 3, mg->ogn, lf->vxl.n, NULL, 0, NULL, NULL);
+
     return;
 }
 
@@ -235,7 +219,12 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
             
         } //asc
         
+        //res
+        mg_res(ocl, mg, op, &mg->lvls[0]);
+        
     } //cycle
+    
+    
     
     return;
 }
