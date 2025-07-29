@@ -49,12 +49,12 @@ int utl_bnd(int4 pos, int4 dim)
 }
 
 //on the border
-int utl_brd(int4 pos, int4 dim)
+int utl_bdr(int4 pos, int4 dim)
 {
     return any(pos.xyz==0)||any(pos.xyz==(dim.xyz-1));
 }
 
-//in-bounds 6-point stencil
+//in-bounds 6-point
 void utl_bnd6(int ss6[6], int4 pos, int4 dim)
 {
     ss6[0] = utl_bnd(pos - (int4){1,0,0,0}, dim);
@@ -151,14 +151,15 @@ kernel void vxl_ini(const struct msh_obj  msh,
     
    float4 x = msh.dx*(convert_float4(pos - (dim-1)/2) + 0.5f); //origin at centre
     
-//    float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
+    float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
     
     //dirichlet
-    float g = utl_brd(pos, dim);
+    float g = utl_bdr(pos, dim);
 //    float g = sdf_g1(x);
+//    float g = (pos.x==0);
     
-    write_imagef(gg, pos, 1.0f);
-    write_imagef(uu, pos, 1.0f);
+    write_imagef(gg, pos, g);
+    write_imagef(uu, pos, u);
     write_imagef(bb, pos, 0.0f);
     write_imagef(rr, pos, 0.0f);
 
@@ -184,35 +185,37 @@ kernel void vxl_jac(const struct msh_obj  msh,
     //read
     float4 g = read_imagef(gg, pos);
     float4 b = read_imagef(bb, pos);
+    float4 u = read_imagef(uu, pos);
     
-//    if(g.x<=0.0f)
+    //deom
+    if(g.x<=0.0f)
     {
-        //stencils
-        float4 gg6[6];
-        mem_rgs6(gg, gg6, pos);
-        
-        float4 uu6[6];
-        mem_rgs6(uu, uu6, pos);
-        
+        //domain
         int bb6[6];
         utl_bnd6(bb6, pos, dim);
+        
+        //soln
+        float4 uu6[6];
+        mem_rgs6(uu, uu6, pos);
         
         //sum,diag
         float s = 0e0f;
         float d = 0e0f;
         
-        //arms
+        //stencil
         for(int i=0; i<6; i++)
         {
-            s += bb6[i];
+            d -= bb6[i];
+            s += bb6[i]*uu6[i].x;
         }
         
-//        float4 r;
-//        r.x = (msh.dx2*b.x - s)/d;
-        
-        //jacobi
-        write_imagef(rr, pos, s);
+        //update
+        u.x = (msh.dx2*b.x - s)/d;
     }
+    
+    //write
+    write_imagef(rr, pos, u);
+    
     return;
 }
 

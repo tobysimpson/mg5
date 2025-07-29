@@ -48,7 +48,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){2,2,2};
+    mg.le = (cl_int3){4,4,4};
     mg.nl = mg.le.x;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;
@@ -103,16 +103,16 @@ int main(int argc, const char * argv[])
      */
     
     //solve
-//    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 100);
+    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 100);
     
     //jac
-    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
-    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  1, sizeof(cl_mem),            (void*)&lvl->gg);
-    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  2, sizeof(cl_mem),            (void*)&lvl->bb);
-    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  3, sizeof(cl_mem),            (void*)&lvl->uu);
-    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  4, sizeof(cl_mem),            (void*)&lvl->rr);
-    
-    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.ops[0].vxl_jac, 3, mg.ogn, lvl->vxl.n, NULL, 0, NULL, NULL);
+//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
+//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  1, sizeof(cl_mem),            (void*)&lvl->gg);
+//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  2, sizeof(cl_mem),            (void*)&lvl->bb);
+//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  3, sizeof(cl_mem),            (void*)&lvl->uu);
+//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  4, sizeof(cl_mem),            (void*)&lvl->rr);
+//    
+//    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.ops[0].vxl_jac, 3, mg.ogn, lvl->vxl.n, NULL, 0, NULL, NULL);
     
 
 
