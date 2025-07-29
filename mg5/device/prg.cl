@@ -209,7 +209,7 @@ kernel void vxl_jac(const struct msh_obj  msh,
             s += bb6[i]*uu6[i].x;
         }
         
-        //update
+        //update, damp
         u.x = (msh.dx2*b.x - s)/d;
     }
     
@@ -333,4 +333,19 @@ kernel void vxl_itp(read_only   image3d_t   uuc,    //coarse    (in)
 
 
 
+//fold
+kernel void vec_sum(global float *uu,
+                    const  int   n)
+{
+    int i = get_global_id(0);
+    int m = get_global_size(0);
 
+//    printf("%d %d %d %f %f\n",i, n, m, uu[i], uu[m+i]);
+    
+    if((m+i)<n)
+    {
+        uu[i] += uu[m+i];
+    }
+      
+    return;
+}

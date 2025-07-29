@@ -49,7 +49,7 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         lvl->msh.dx2        = lvl->msh.dx*lvl->msh.dx;
         lvl->msh.rdx2       = 1e0f/lvl->msh.dx2;
         
-        printf("lvl %d [%d,%d,%d] [%3zu,%3zu,%3zu] %8zu %f %f\n", l,
+        printf("lvl %d [%2d,%2d,%2d] [%4zu,%4zu,%4zu] %10zu %f %f\n", l,
                lvl->le.x,
                lvl->le.y,
                lvl->le.z,
@@ -223,6 +223,86 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
     return;
 }
 
+
+/*
+ =====================
+ norms
+ =====================
+ */
+
+/*
+
+//norms
+void mg_nrm(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lvl)
+{
+    //arg
+    ocl->err = clSetKernelArg(mg->ele_rsq,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
+    ocl->err = clSetKernelArg(mg->ele_rsq,  1, sizeof(cl_mem),            (void*)&lvl->rr);
+    ocl->err = clSetKernelArg(mg->ele_rsq,  2, sizeof(cl_mem),            (void*)&lvl->ee);
+    
+    //res sq
+    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->ele_rsq, 3, NULL, lvl->msh.ne_sz, NULL, 0, NULL, NULL);
+    float r = mg_red(ocl, mg, lvl->ee, lvl->msh.ne_tot);
+    
+    //arg
+    ocl->err = clSetKernelArg(mg->ele_esq,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
+    ocl->err = clSetKernelArg(mg->ele_esq,  1, sizeof(cl_mem),            (void*)&lvl->uu);
+    ocl->err = clSetKernelArg(mg->ele_esq,  2, sizeof(cl_mem),            (void*)&lvl->aa);
+    ocl->err = clSetKernelArg(mg->ele_esq,  3, sizeof(cl_mem),            (void*)&lvl->ee);
+    
+    //err sq
+    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->ele_esq, 3, NULL, lvl->msh.ne_sz, NULL, 0, NULL, &ocl->event);
+    float e = mg_red(ocl, mg, lvl->ee, lvl->msh.ne_tot);
+    
+    float dx3 = lvl->msh.dx*lvl->msh.dx2;
+    
+    //norms
+//    printf("nrm [%2u,%2u,%2u] %+e %+e\n", lvl->msh.le.x, lvl->msh.le.y, lvl->msh.le.z, sqrt(dx3*r), sqrt(dx3*e));
+    printf("%10d %+e %+e\n", lvl->msh.nv_tot, sqrt(dx3*r), sqrt(dx3*e));
+    
+    return;
+}
+ 
+ */
+
+/*
+
+//fold (max 1024ˆ3)
+float mg_red(struct ocl_obj *ocl, struct mg_obj *mg, cl_mem uu, cl_int n)
+{
+    //args
+    ocl->err = clSetKernelArg(mg->vec_sum, 0, sizeof(cl_mem), (void*)&uu);
+    ocl->err = clSetKernelArg(mg->vec_sum, 1, sizeof(cl_int), (void*)&n);
+
+    uint l = ceil(log2(n));
+    
+    //loop
+    for(int i=0; i<l; i++)
+    {
+        size_t p = pow(2,l-i-1);
+        
+//        printf("%2d %2d %u %zu\n", i, l, n, p);
+    
+        //calc
+        ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->vec_sum, 1, NULL, &p, NULL, 0, NULL, NULL);
+    }
+    
+    //result
+    float r;
+    
+    //read
+    ocl->err = clEnqueueReadBuffer(ocl->command_queue, uu, CL_TRUE, 0, sizeof(float), &r, 0, NULL, NULL);
+
+    return r;
+}
+
+ */
+
+/*
+ =====================
+ clean
+ =====================
+ */
 
 //final
 void mg_fin(struct ocl_obj *ocl, struct mg_obj *mg)

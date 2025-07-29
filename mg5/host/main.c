@@ -49,7 +49,7 @@ int main(int argc, const char * argv[])
     //multigrid
     struct mg_obj mg;
     mg.le = (cl_int3){8,8,8};
-    mg.nl = mg.le.x - 2;
+    mg.nl = mg.le.x;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;
     mg_ini(&ocl, &mg);
@@ -109,7 +109,7 @@ int main(int argc, const char * argv[])
 //    mg_res(&ocl, &mg, &mg.ops[0], &mg.lvls[0]);
     
     //cyc nl,nj,nc
-    mg_cyc(&ocl, &mg, &mg.ops[0], mg.nl, 5, 10);
+    mg_cyc(&ocl, &mg, &mg.ops[0], mg.nl, 5, 5);
     
     //jac
 //    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
@@ -122,26 +122,26 @@ int main(int argc, const char * argv[])
     
 
 
-    //write all
-    for(int l=0; l<mg.nl; l++)
-    {
-        struct lvl_obj *lvl = &mg.lvls[l];
-
-        //write
-        wrt_xmf(&ocl, lvl, l, 0);
-        wrt_img(&ocl, lvl->gg, &lvl->vxl, "gg", l, 0);
-        wrt_img(&ocl, lvl->uu, &lvl->vxl, "uu", l, 0);
-        wrt_img(&ocl, lvl->bb, &lvl->vxl, "bb", l, 0);
-        wrt_img(&ocl, lvl->rr, &lvl->vxl, "rr", l, 0);
-    }
+//    //write all
+//    for(int l=0; l<mg.nl; l++)
+//    {
+//        struct lvl_obj *lvl = &mg.lvls[l];
+//
+//        //write
+//        wrt_xmf(&ocl, lvl, l, 0);
+//        wrt_img(&ocl, lvl->gg, &lvl->vxl, "gg", l, 0);
+//        wrt_img(&ocl, lvl->uu, &lvl->vxl, "uu", l, 0);
+//        wrt_img(&ocl, lvl->bb, &lvl->vxl, "bb", l, 0);
+//        wrt_img(&ocl, lvl->rr, &lvl->vxl, "rr", l, 0);
+//    }
     
 
-//    //write fine
-//    wrt_xmf(&ocl, lvl, 0, 0);
-//    wrt_img1(&ocl, lvl->gg, &lvl->vxl, "gg", 0, 0);
-//    wrt_img1(&ocl, lvl->uu, &lvl->vxl, "uu", 0, 0);
-//    wrt_img1(&ocl, lvl->bb, &lvl->vxl, "bb", 0, 0);
-//    wrt_img1(&ocl, lvl->rr, &lvl->vxl, "rr", 0, 0);
+    //write fine
+    wrt_xmf(&ocl, lvl, 0, 0);
+    wrt_img(&ocl, lvl->gg, &lvl->vxl, "gg", 0, 0);
+    wrt_img(&ocl, lvl->uu, &lvl->vxl, "uu", 0, 0);
+    wrt_img(&ocl, lvl->bb, &lvl->vxl, "bb", 0, 0);
+    wrt_img(&ocl, lvl->rr, &lvl->vxl, "rr", 0, 0);
     
     /*
      ====================
