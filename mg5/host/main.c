@@ -48,7 +48,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){6,6,6};
+    mg.le = (cl_int3){8,8,8};
     mg.nl = mg.le.x - 2;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;

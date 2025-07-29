@@ -69,8 +69,7 @@ struct mg_obj
     //array
     struct lvl_obj *lvls;
     
-    //kernels
-    cl_kernel       vxl_geo;
+    //trans
     cl_kernel       vxl_prj;
     cl_kernel       vxl_itp;
     

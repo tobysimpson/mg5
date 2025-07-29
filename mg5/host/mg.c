@@ -49,7 +49,7 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         lvl->msh.dx2        = lvl->msh.dx*lvl->msh.dx;
         lvl->msh.rdx2       = 1e0f/lvl->msh.dx2;
         
-        printf("lvl %d [%d,%d,%d] [%2zu,%2zu,%2zu] %6zu %f %f\n", l,
+        printf("lvl %d [%d,%d,%d] [%3zu,%3zu,%3zu] %8zu %f %f\n", l,
                lvl->le.x,
                lvl->le.y,
                lvl->le.z,
@@ -70,9 +70,6 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         lvl->bb = clCreateImage(ocl->context, CL_MEM_HOST_READ_ONLY, &fmt1, &dsc1, NULL, &ocl->err);
         lvl->rr = clCreateImage(ocl->context, CL_MEM_HOST_READ_ONLY, &fmt1, &dsc1, NULL, &ocl->err);
     }
-    
-    //geo
-    mg->vxl_geo = clCreateKernel(ocl->program, "vxl_geo", &ocl->err);
     
     //trans
     mg->vxl_prj = clCreateKernel(ocl->program, "vxl_prj", &ocl->err);
@@ -200,7 +197,6 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
             
         } //dsc
         
-        
         //coarse
         mg_jac(ocl, mg, op, &mg->lvls[nl-1], nj);
         
@@ -224,8 +220,6 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
         
     } //cycle
     
-    
-    
     return;
 }
 
@@ -233,7 +227,6 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
 //final
 void mg_fin(struct ocl_obj *ocl, struct mg_obj *mg)
 {
-    ocl->err = clReleaseKernel(mg->vxl_geo);
     ocl->err = clReleaseKernel(mg->vxl_prj);
     ocl->err = clReleaseKernel(mg->vxl_itp);
     
