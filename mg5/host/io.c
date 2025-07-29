@@ -26,7 +26,7 @@ void wrt_xmf(struct ocl_obj *ocl, struct lvl_obj *lvl, int l, int f)
     fprintf(file1,"      <Geometry name=\"geo\" Type=\"ORIGIN_DXDYDZ\">\n");
     fprintf(file1,"        <!-- Origin -->\n");
 //    fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", 0e0f, 0e0f, 0e0f);
-    fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", -lvl->msh.dx*(lvl->vxl.n[0]/2), -lvl->msh.dx*(lvl->vxl.n[1]/2), -lvl->msh.dx*(lvl->vxl.n[2]/2));  //origin at centre
+    fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", -lvl->msh.dx*(lvl->ele.n[0]/2), -lvl->msh.dx*(lvl->ele.n[1]/2), -lvl->msh.dx*(lvl->ele.n[2]/2));  //origin at centre
     fprintf(file1,"        <!-- DxDyDz -->\n");
     fprintf(file1,"        <DataItem Format=\"XML\" Dimensions=\"3\">%f %f %f</DataItem>\n", lvl->msh.dx, lvl->msh.dx, lvl->msh.dx);
     fprintf(file1,"      </Geometry>\n");

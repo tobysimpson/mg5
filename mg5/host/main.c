@@ -81,12 +81,15 @@ int main(int argc, const char * argv[])
      ====================
      */
     
-    //geom
-    for(int l=0; l<mg.nl; l++)
-    {
-        struct lvl_obj *lvl = &mg.lvls[l];
-        mg_geo(&ocl, &mg, lvl);
-    }
+    
+//    mg_geo(&ocl, &mg, lvl);
+    
+//    //geom
+//    for(int l=0; l<mg.nl; l++)
+//    {
+//        struct lvl_obj *lvl = &mg.lvls[l];
+//        mg_geo(&ocl, &mg, lvl);
+//    }
     
     /*
      ====================
@@ -95,9 +98,9 @@ int main(int argc, const char * argv[])
      */
     
     //solve
-    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 1000);
+//    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 1000);
     
-    /*
+
     
     //project
     for(int l=0; l<(mg.nl-1); l++)
@@ -108,14 +111,13 @@ int main(int argc, const char * argv[])
         
         //args
         ocl.err = clSetKernelArg(mg.vxl_prj,  0, sizeof(cl_mem),            (void*)&lf->gg);      //fine
-        ocl.err = clSetKernelArg(mg.vxl_prj,  1, sizeof(cl_mem),            (void*)&lc->uu);      //coarse
-        ocl.err = clSetKernelArg(mg.vxl_prj,  2, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
+        ocl.err = clSetKernelArg(mg.vxl_prj,  1, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
         
         //project
-        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_prj, 3, NULL, lc->vxl.n, NULL, 0, NULL, NULL);
+        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_prj, 3, mg.ogn, lc->vxl.n, NULL, 0, NULL, NULL);
     }
      
-    */
+
     
     
     //fill/copy

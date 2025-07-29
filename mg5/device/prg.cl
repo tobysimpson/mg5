@@ -125,7 +125,7 @@ kernel void vxl_ini(const struct msh_obj  msh,
     
     float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
     
-    write_imagef(gg, pos, 0.0f);
+    write_imagef(gg, pos, pos.x);
     write_imagef(uu, pos, u);
     write_imagef(bb, pos, 0.0f);
     write_imagef(rr, pos, u);           //bounds here too
@@ -210,7 +210,7 @@ kernel void vxl_jac(const struct msh_obj  msh,
 
 
 //project (inject)
-kernel void vtx_prj(read_only     image3d_t     rr,    //fine
+kernel void vxl_prj(read_only     image3d_t     rr,    //fine
                     write_only    image3d_t     bb)    //coarse
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
@@ -301,22 +301,22 @@ kernel void vtx_prj(read_only     image3d_t     rr,    //fine
 
 
 
-////interp (inject)
-//kernel void vxl_itp(read_only   image3d_t   uuc,    //coarse    (in)
-//                    read_only   image3d_t   rrf,    //fine      (in) holds uuf
-//                    write_only  image3d_t   uuf)    //fine      (out)
-//{
-//    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
-//
-//    //read
-//    float4 uf = read_imagef(rrf, pos);
-//    float4 uc = read_imagef(uuc, pos/2);
-//
-//    //write
-//    write_imagef(uuf, pos, uf + 0.125f*uc);  //avg
-//
-//    return;
-//}
+//interp (inject)
+kernel void vxl_itp(read_only   image3d_t   uuc,    //coarse    (in)
+                    read_only   image3d_t   rrf,    //fine      (in) holds uuf
+                    write_only  image3d_t   uuf)    //fine      (out)
+{
+    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+
+    //read
+    float4 uf = read_imagef(rrf, pos);
+    float4 uc = read_imagef(uuc, pos/2);
+
+    //write
+    write_imagef(uuf, pos, uf + 0.125f*uc);  //avg
+
+    return;
+}
 
 
 
