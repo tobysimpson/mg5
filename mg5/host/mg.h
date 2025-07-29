@@ -91,8 +91,6 @@ void mg_fin(struct ocl_obj *ocl, struct mg_obj *mg);
 void mg_itp(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lf, struct lvl_obj *lc);
 void mg_prj(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lf, struct lvl_obj *lc);
 
-void mg_geo(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lvl);
-
 void mg_jac(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, struct lvl_obj *lvl, int nj);
 void mg_res(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, struct lvl_obj *lvl);
 

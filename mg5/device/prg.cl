@@ -45,13 +45,26 @@ int utl_idx(int4 pos, int4 dim)
 //in-bounds
 int utl_bnd(int4 pos, int4 dim)
 {
-    return all(pos.xyz>=0)&&all(pos.xyz<dim.xyz);
+    return all(pos.xyz>-1)&&all(pos.xyz<dim.xyz);
 }
 
 //on the border
 int utl_brd(int4 pos, int4 dim)
 {
     return any(pos.xyz==0)||any(pos.xyz==(dim.xyz-1));
+}
+
+//in-bounds 6-point stencil
+void utl_bnd6(int ss6[6], int4 pos, int4 dim)
+{
+    ss6[0] = utl_bnd(pos - (int4){1,0,0,0}, dim);
+    ss6[1] = utl_bnd(pos + (int4){1,0,0,0}, dim);
+    ss6[2] = utl_bnd(pos - (int4){0,1,0,0}, dim);
+    ss6[3] = utl_bnd(pos + (int4){0,1,0,0}, dim);
+    ss6[4] = utl_bnd(pos - (int4){0,0,1,0}, dim);
+    ss6[5] = utl_bnd(pos + (int4){0,0,1,0}, dim);
+
+    return;
 }
 
 /*
@@ -76,14 +89,14 @@ void mem_rgs2(read_only image3d_t uu, float4 uu2[8], int4 pos)
 }
 
 //read global scalar 6-point stencil
-void mem_rgs6(read_only image3d_t uu, float4 ss[6], int4 pos)
+void mem_rgs6(read_only image3d_t uu, float4 ss6[6], int4 pos)
 {
-    ss[0] = read_imagef(uu, pos - (int4){1,0,0,0});
-    ss[1] = read_imagef(uu, pos + (int4){1,0,0,0});
-    ss[2] = read_imagef(uu, pos - (int4){0,1,0,0});
-    ss[3] = read_imagef(uu, pos + (int4){0,1,0,0});
-    ss[4] = read_imagef(uu, pos - (int4){0,0,1,0});
-    ss[5] = read_imagef(uu, pos + (int4){0,0,1,0});
+    ss6[0] = read_imagef(uu, pos - (int4){1,0,0,0});
+    ss6[1] = read_imagef(uu, pos + (int4){1,0,0,0});
+    ss6[2] = read_imagef(uu, pos - (int4){0,1,0,0});
+    ss6[3] = read_imagef(uu, pos + (int4){0,1,0,0});
+    ss6[4] = read_imagef(uu, pos - (int4){0,0,1,0});
+    ss6[5] = read_imagef(uu, pos + (int4){0,0,1,0});
 
     return;
 }
@@ -110,6 +123,15 @@ float sdf_cub(float4 x, float4 c, float4 r)
 }
 
 
+float sdf_g1(float4 x)
+{
+    float g1 = sdf_sph(x,(float4){+0.25f, +0.25f, -0.25f, 0.0f}, 0.5f);
+    float g2 = sdf_cub(x,(float4){-0.25f, -0.25f, +0.25f, 0.0f}, (float4){0.5f, 0.5f, 0.5f, 0.0f});
+    float g = min(g1,g2);
+    
+     return g;
+}
+
 /*
  ============================
  ini
@@ -120,41 +142,25 @@ float sdf_cub(float4 x, float4 c, float4 r)
 //ini
 kernel void vxl_ini(const struct msh_obj  msh,
                     write_only image3d_t  gg,
-                    write_only image3d_t  uu,
                     write_only image3d_t  bb,
+                    write_only image3d_t  uu,
                     write_only image3d_t  rr)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
     int4 dim = get_image_dim(gg);
     
-   float4 x = msh.dx*(convert_float4(pos - (dim-1)/2) + 0.5f);
+   float4 x = msh.dx*(convert_float4(pos - (dim-1)/2) + 0.5f); //origin at centre
     
 //    float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
     
+    //dirichlet
     float g = utl_brd(pos, dim);
+//    float g = sdf_g1(x);
     
-    write_imagef(gg, pos, g);
-    write_imagef(uu, pos, g*sin(x.x));
-    write_imagef(bb, pos, sin(x.x));
+    write_imagef(gg, pos, 1.0f);
+    write_imagef(uu, pos, 1.0f);
+    write_imagef(bb, pos, 0.0f);
     write_imagef(rr, pos, 0.0f);
-
-    return;
-}
-
-
-//geom
-kernel void vxl_geo(const       struct msh_obj  msh,
-                    write_only  image3d_t       gg)
-{
-    int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
-//    int4 dim = get_image_dim(gg);
-    
-//    float4 x = msh.dx*(convert_float4(pos - (dim-1)/2) + 0.5f);
-//    float g1 = sdf_sph(x,(float4){+0.25f, +0.25f, -0.25f, 0.0f}, 0.5f);
-//    float g2 = sdf_cub(x,(float4){-0.25f, -0.25f, +0.25f, 0.0f}, (float4){0.5f, 0.5f, 0.5f, 0.0f});
-//    float g = min(g1,g2);
-    
-    write_imagef(gg, pos, pos.x);
 
     return;
 }
@@ -168,24 +174,28 @@ kernel void vxl_geo(const       struct msh_obj  msh,
 //jacobi
 kernel void vxl_jac(const struct msh_obj  msh,
                     read_only     image3d_t       gg,
-                    read_only     image3d_t       uu,
                     read_only     image3d_t       bb,
+                    read_only     image3d_t       uu,
                     write_only    image3d_t       rr)
 {
     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+    int4 dim = get_image_dim(gg);
     
     //read
-    float4 b = read_imagef(bb, pos);
     float4 g = read_imagef(gg, pos);
+    float4 b = read_imagef(bb, pos);
     
-    if(g.x<=0.0f)
+//    if(g.x<=0.0f)
     {
-        //stencil
+        //stencils
         float4 gg6[6];
         mem_rgs6(gg, gg6, pos);
         
         float4 uu6[6];
         mem_rgs6(uu, uu6, pos);
+        
+        int bb6[6];
+        utl_bnd6(bb6, pos, dim);
         
         //sum,diag
         float s = 0e0f;
@@ -194,16 +204,14 @@ kernel void vxl_jac(const struct msh_obj  msh,
         //arms
         for(int i=0; i<6; i++)
         {
-            float g1 = (gg6[i].x>0.0f); //invert
-            d += g1*1.0f;
-            s -= g1*uu6[i].x;
+            s += bb6[i];
         }
         
-        float4 r;
-        r.x = (msh.dx2*b.x - s)/d;
+//        float4 r;
+//        r.x = (msh.dx2*b.x - s)/d;
         
         //jacobi
-        write_imagef(rr, pos, r);
+        write_imagef(rr, pos, s);
     }
     return;
 }

@@ -48,7 +48,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){3,3,3};
+    mg.le = (cl_int3){2,2,2};
     mg.nl = mg.le.x;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;
@@ -68,8 +68,8 @@ int main(int argc, const char * argv[])
     //arg
     ocl.err = clSetKernelArg(vxl_ini, 0, sizeof(struct msh_obj), &lvl->msh);
     ocl.err = clSetKernelArg(vxl_ini, 1, sizeof(cl_mem)        , &lvl->gg);
-    ocl.err = clSetKernelArg(vxl_ini, 2, sizeof(cl_mem)        , &lvl->uu);
-    ocl.err = clSetKernelArg(vxl_ini, 3, sizeof(cl_mem)        , &lvl->bb);
+    ocl.err = clSetKernelArg(vxl_ini, 2, sizeof(cl_mem)        , &lvl->bb);
+    ocl.err = clSetKernelArg(vxl_ini, 3, sizeof(cl_mem)        , &lvl->uu);
     ocl.err = clSetKernelArg(vxl_ini, 4, sizeof(cl_mem)        , &lvl->rr);
     
     //ini
@@ -80,17 +80,6 @@ int main(int argc, const char * argv[])
      geometry
      ====================
      */
-    
-    
-//    mg_geo(&ocl, &mg, lvl);
-//    mg_geo(&ocl, &mg, &mg.lvls[mg.nl-1]);
-    
-//    //geom
-//    for(int l=0; l<mg.nl; l++)
-//    {
-//        struct lvl_obj *lvl = &mg.lvls[l];
-//        mg_geo(&ocl, &mg, lvl);
-//    }
     
     //project
     for(int l=0; l<(mg.nl-1); l++)
@@ -114,37 +103,19 @@ int main(int argc, const char * argv[])
      */
     
     //solve
-//    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 1000);
+//    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 100);
+    
+    //jac
+    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
+    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  1, sizeof(cl_mem),            (void*)&lvl->gg);
+    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  2, sizeof(cl_mem),            (void*)&lvl->bb);
+    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  3, sizeof(cl_mem),            (void*)&lvl->uu);
+    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  4, sizeof(cl_mem),            (void*)&lvl->rr);
+    
+    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.ops[0].vxl_jac, 3, mg.ogn, lvl->vxl.n, NULL, 0, NULL, NULL);
     
 
-    
 
-     
-    
-//    //interp
-//    for(int l=(mg.nl-2); l>=0; l--)
-//    {
-//        //levels
-//        struct lvl_obj *lf = &mg.lvls[l];
-//        struct lvl_obj *lc = &mg.lvls[l+1];
-//
-//        //args
-//        ocl.err = clSetKernelArg(mg.vxl_itp,  0, sizeof(cl_mem),            (void*)&lc->gg);      //coarse
-//        ocl.err = clSetKernelArg(mg.vxl_itp,  1, sizeof(cl_mem),            (void*)&lf->gg);      //fine
-//        ocl.err = clSetKernelArg(mg.vxl_itp,  2, sizeof(cl_mem),            (void*)&lf->rr);      //fine
-//        
-//        //interp
-//        ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.vxl_itp, 3, mg.ogn, lf->vxl.n, NULL, 0, NULL, NULL);
-//    }
-
-    
-    
-    //fill/copy
-//    cl_float4 ptn = {3.0f, 0.0f, 0.0f, 0.0f};
-//    clEnqueueFillImage(ocl.command_queue, lvl->uu, &ptn, mg.ogn, lvl->vxl.n, 0, NULL, NULL);
-//    clEnqueueCopyImage(ocl.command_queue, lvl->uu, lvl->rr, mg.ogn, mg.ogn, lvl->vxl.n, 0, NULL, NULL);
-        
-    
     //write all
     for(int l=0; l<mg.nl; l++)
     {
