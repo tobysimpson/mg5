@@ -91,9 +91,9 @@ void wrt_img(struct ocl_obj *ocl, cl_mem img, char* tag, int l, int f)
     size_t sp;
     
     ocl->err = clGetImageInfo(img, CL_IMAGE_ELEMENT_SIZE,   sizeof(size_t), &ele_sz,    NULL);
-    ocl->err = clGetImageInfo(img, CL_IMAGE_WIDTH,          sizeof(size_t), &dim[0],      NULL);
-    ocl->err = clGetImageInfo(img, CL_IMAGE_HEIGHT,         sizeof(size_t), &dim[1],      NULL);
-    ocl->err = clGetImageInfo(img, CL_IMAGE_DEPTH,          sizeof(size_t), &dim[2],      NULL);
+    ocl->err = clGetImageInfo(img, CL_IMAGE_WIDTH,          sizeof(size_t), &dim[0],    NULL);
+    ocl->err = clGetImageInfo(img, CL_IMAGE_HEIGHT,         sizeof(size_t), &dim[1],    NULL);
+    ocl->err = clGetImageInfo(img, CL_IMAGE_DEPTH,          sizeof(size_t), &dim[2],    NULL);
     ocl->err = clGetImageInfo(img, CL_IMAGE_ROW_PITCH,      sizeof(size_t), &rp,        NULL);
     ocl->err = clGetImageInfo(img, CL_IMAGE_SLICE_PITCH,    sizeof(size_t), &sp,        NULL);
     

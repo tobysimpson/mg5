@@ -158,7 +158,7 @@ kernel void vxl_ini(const struct msh_obj  msh,
 //    float g = (pos.x==0);
     
     write_imagef(gg, pos, g);
-    write_imagef(uu, pos, pos.x);
+    write_imagef(uu, pos, 1.0f);
     write_imagef(bb, pos, 0.0f);
     write_imagef(rr, pos, 0.0f);
 

@@ -48,7 +48,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){4,4,4};
+    mg.le = (cl_int3){8,8,8};
     mg.nl = mg.le.x;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;
@@ -75,6 +75,9 @@ int main(int argc, const char * argv[])
     //ini
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, vxl_ini, 3, NULL, lvl->vxl.n, NULL, 0, NULL, NULL);
 
+    //sum
+    sum_img1(&ocl, lvl->uu);
+    
     /*
      ====================
      geometry

@@ -95,5 +95,6 @@ void mg_res(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, struct lv
 
 void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, int nj, int nc);
 
+void sum_img1(struct ocl_obj *ocl, cl_mem img);
 
 #endif /* mg_h */
