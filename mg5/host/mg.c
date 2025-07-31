@@ -33,6 +33,8 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         lvl->ele.i[1] = lvl->ele.n[1] - 2;
         lvl->ele.i[2] = lvl->ele.n[2] - 2;
         
+        lvl->ele.tot = lvl->ele.n[0]*lvl->ele.n[1]*lvl->ele.n[2];
+        
         lvl->vxl.n[0] = lvl->ele.n[0] + 1;
         lvl->vxl.n[1] = lvl->ele.n[1] + 1;
         lvl->vxl.n[2] = lvl->ele.n[2] + 1;
@@ -40,6 +42,8 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         lvl->vxl.i[0] = lvl->vxl.n[0] - 2;
         lvl->vxl.i[1] = lvl->vxl.n[1] - 2;
         lvl->vxl.i[2] = lvl->vxl.n[2] - 2;
+        
+        lvl->vxl.tot = lvl->vxl.n[0]*lvl->vxl.n[1]*lvl->vxl.n[2];
         
         //dx
         lvl->msh.dx = mg->dx*powf(2e0f,l);
@@ -230,43 +234,40 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
  =====================
  */
 
-//float
-void sum_img1(struct ocl_obj *ocl, cl_mem img)
+//p-sum
+double img_sum(struct ocl_obj *ocl, cl_mem img, double p)
 {
     float* ptr;
     
     size_t ogn[3] = {0,0,0};
-    size_t ele_sz;
     size_t dim[3];
-    
     size_t rp;
     size_t sp;
     
-    ocl->err = clGetImageInfo(img, CL_IMAGE_ELEMENT_SIZE,   sizeof(size_t), &ele_sz,    NULL);
-    ocl->err = clGetImageInfo(img, CL_IMAGE_WIDTH,          sizeof(size_t), &dim[0],      NULL);
-    ocl->err = clGetImageInfo(img, CL_IMAGE_HEIGHT,         sizeof(size_t), &dim[1],      NULL);
-    ocl->err = clGetImageInfo(img, CL_IMAGE_DEPTH,          sizeof(size_t), &dim[2],      NULL);
+    ocl->err = clGetImageInfo(img, CL_IMAGE_WIDTH,          sizeof(size_t), &dim[0],    NULL);
+    ocl->err = clGetImageInfo(img, CL_IMAGE_HEIGHT,         sizeof(size_t), &dim[1],    NULL);
+    ocl->err = clGetImageInfo(img, CL_IMAGE_DEPTH,          sizeof(size_t), &dim[2],    NULL);
     ocl->err = clGetImageInfo(img, CL_IMAGE_ROW_PITCH,      sizeof(size_t), &rp,        NULL);
     ocl->err = clGetImageInfo(img, CL_IMAGE_SLICE_PITCH,    sizeof(size_t), &sp,        NULL);
     
-    size_t n = dim[0]*dim[1]*dim[2];
+    size_t tot = dim[0]*dim[1]*dim[2];
     
     //map
     ptr = clEnqueueMapImage(ocl->command_queue, img, CL_TRUE, CL_MAP_READ, ogn, dim, &rp, &sp, 0, NULL, NULL, NULL);
     
-    double s = 0.0;
+    //total
+    double s = 0.0f;
     
-    for(int i=0; i<n; i++)
+    //sum
+    for(int i=0; i<tot; i++)
     {
-        s += ptr[i];
+        s += pow(ptr[i], p);
     }
     
     //unmap
     clEnqueueUnmapMemObject(ocl->command_queue, img, ptr, 0, NULL, NULL);
-    
-    printf("%f\n",s);
 
-    return;
+    return s;
 }
 
 /*

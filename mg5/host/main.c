@@ -48,9 +48,9 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){8,8,8};
+    mg.le = (cl_int3){10,10,10};
     mg.nl = mg.le.x;
-    mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
+    mg.dx = powf(2e0f, -mg.le.x);  //[-0.5,+0.5]
     mg.dt = 0.5f;
     mg_ini(&ocl, &mg);
     
@@ -76,7 +76,10 @@ int main(int argc, const char * argv[])
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, vxl_ini, 3, NULL, lvl->vxl.n, NULL, 0, NULL, NULL);
 
     //sum
-    sum_img1(&ocl, lvl->uu);
+    double s = img_sum(&ocl, lvl->uu, 1.0);           //sum
+    double v = 1.0/(double)lvl->vxl.tot;         //volume
+    
+    printf("%f %e %e \n",s, v, s/(double)lvl->vxl.tot);
     
     /*
      ====================
@@ -142,12 +145,12 @@ int main(int argc, const char * argv[])
 //    }
     
 
-    //write fine
-    wrt_xmf(&ocl, lvl, 0, 0);
-    wrt_img(&ocl, lvl->gg, "gg", 0, 0);
-    wrt_img(&ocl, lvl->uu, "uu", 0, 0);
-    wrt_img(&ocl, lvl->bb, "bb", 0, 0);
-    wrt_img(&ocl, lvl->rr, "rr", 0, 0);
+//    //write fine
+//    wrt_xmf(&ocl, lvl, 0, 0);
+//    wrt_img(&ocl, lvl->gg, "gg", 0, 0);
+//    wrt_img(&ocl, lvl->uu, "uu", 0, 0);
+//    wrt_img(&ocl, lvl->bb, "bb", 0, 0);
+//    wrt_img(&ocl, lvl->rr, "rr", 0, 0);
     
     /*
      ====================

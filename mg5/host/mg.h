@@ -25,8 +25,9 @@ struct msh_obj
 //object
 struct dim_obj
 {
-    size_t    n[3];   //all
-    size_t    i[3];   //interior
+    size_t  n[3];   //all
+    size_t  i[3];   //interior
+    size_t  tot;    //total
 };
 
 //object
@@ -35,7 +36,6 @@ struct lvl_obj
     cl_int3         le;
     
     struct msh_obj  msh;
-    
     struct dim_obj  vxl;
     struct dim_obj  ele;
 
@@ -95,6 +95,6 @@ void mg_res(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, struct lv
 
 void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, int nj, int nc);
 
-void sum_img1(struct ocl_obj *ocl, cl_mem img);
+double img_sum(struct ocl_obj *ocl, cl_mem img, double p);
 
 #endif /* mg_h */
