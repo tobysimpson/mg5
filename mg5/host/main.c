@@ -48,7 +48,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){8,8,8};
+    mg.le = (cl_int3){4,4,4};
     mg.nl = mg.le.x;
     mg.dx = 2.0f*powf(2e0f, -mg.le.x);  //[-1,+1]
     mg.dt = 0.5f;
@@ -102,14 +102,17 @@ int main(int argc, const char * argv[])
      ====================
      */
     
+
+    //mg cycle (nl,nj,nc)
+//    mg_cyc(&ocl, &mg, &mg.ops[0], mg.nl, 5, 5);
+    
+    
     //solve
 //    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 10);
     
     //res
 //    mg_res(&ocl, &mg, &mg.ops[0], &mg.lvls[0]);
     
-    //cyc nl,nj,nc
-    mg_cyc(&ocl, &mg, &mg.ops[0], mg.nl, 5, 5);
     
     //jac
 //    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
@@ -138,10 +141,10 @@ int main(int argc, const char * argv[])
 
     //write fine
     wrt_xmf(&ocl, lvl, 0, 0);
-    wrt_img(&ocl, lvl->gg, &lvl->vxl, "gg", 0, 0);
-    wrt_img(&ocl, lvl->uu, &lvl->vxl, "uu", 0, 0);
-    wrt_img(&ocl, lvl->bb, &lvl->vxl, "bb", 0, 0);
-    wrt_img(&ocl, lvl->rr, &lvl->vxl, "rr", 0, 0);
+    wrt_img(&ocl, lvl->gg, "gg", 0, 0);
+    wrt_img(&ocl, lvl->uu, "uu", 0, 0);
+    wrt_img(&ocl, lvl->bb, "bb", 0, 0);
+    wrt_img(&ocl, lvl->rr, "rr", 0, 0);
     
     /*
      ====================

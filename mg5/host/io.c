@@ -78,7 +78,7 @@ void wrt_xmf(struct ocl_obj *ocl, struct lvl_obj *lvl, int l, int f)
 
 
 //float
-void wrt_img(struct ocl_obj *ocl, cl_mem img, struct dim_obj *dim, char* tag, int l, int f)
+void wrt_img(struct ocl_obj *ocl, cl_mem img, char* tag, int l, int f)
 {
     FILE* file1;
     char file1_name[128];
@@ -86,22 +86,22 @@ void wrt_img(struct ocl_obj *ocl, cl_mem img, struct dim_obj *dim, char* tag, in
     
     size_t ogn[3] = {0,0,0};
     size_t ele_sz;
-    size_t n[3];
+    size_t dim[3];
     size_t rp;
     size_t sp;
     
     ocl->err = clGetImageInfo(img, CL_IMAGE_ELEMENT_SIZE,   sizeof(size_t), &ele_sz,    NULL);
-    ocl->err = clGetImageInfo(img, CL_IMAGE_WIDTH,          sizeof(size_t), &n[0],      NULL);
-    ocl->err = clGetImageInfo(img, CL_IMAGE_HEIGHT,         sizeof(size_t), &n[1],      NULL);
-    ocl->err = clGetImageInfo(img, CL_IMAGE_DEPTH,          sizeof(size_t), &n[2],      NULL);
+    ocl->err = clGetImageInfo(img, CL_IMAGE_WIDTH,          sizeof(size_t), &dim[0],      NULL);
+    ocl->err = clGetImageInfo(img, CL_IMAGE_HEIGHT,         sizeof(size_t), &dim[1],      NULL);
+    ocl->err = clGetImageInfo(img, CL_IMAGE_DEPTH,          sizeof(size_t), &dim[2],      NULL);
     ocl->err = clGetImageInfo(img, CL_IMAGE_ROW_PITCH,      sizeof(size_t), &rp,        NULL);
     ocl->err = clGetImageInfo(img, CL_IMAGE_SLICE_PITCH,    sizeof(size_t), &sp,        NULL);
     
     //buffer
     sprintf(file1_name, "%s/raw/%s.%02d.%03d.raw", ROOT_WRITE, tag, l, f);
     file1 = fopen(file1_name,"wb");
-    ptr = clEnqueueMapImage(ocl->command_queue, img, CL_TRUE, CL_MAP_READ, ogn, dim->n, &rp, &sp, 0, NULL, NULL, NULL);
-    fwrite(ptr, ele_sz, n[0]*n[1]*n[2], file1);
+    ptr = clEnqueueMapImage(ocl->command_queue, img, CL_TRUE, CL_MAP_READ, ogn, dim, &rp, &sp, 0, NULL, NULL, NULL);
+    fwrite(ptr, ele_sz, dim[0]*dim[1]*dim[2], file1);
     clEnqueueUnmapMemObject(ocl->command_queue, img, ptr, 0, NULL, NULL);
     
     //clean up

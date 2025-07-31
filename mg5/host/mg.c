@@ -230,73 +230,36 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
  =====================
  */
 
-/*
-
-//norms
-void mg_nrm(struct ocl_obj *ocl, struct mg_obj *mg, struct lvl_obj *lvl)
-{
-    //arg
-    ocl->err = clSetKernelArg(mg->ele_rsq,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
-    ocl->err = clSetKernelArg(mg->ele_rsq,  1, sizeof(cl_mem),            (void*)&lvl->rr);
-    ocl->err = clSetKernelArg(mg->ele_rsq,  2, sizeof(cl_mem),            (void*)&lvl->ee);
-    
-    //res sq
-    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->ele_rsq, 3, NULL, lvl->msh.ne_sz, NULL, 0, NULL, NULL);
-    float r = mg_red(ocl, mg, lvl->ee, lvl->msh.ne_tot);
-    
-    //arg
-    ocl->err = clSetKernelArg(mg->ele_esq,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
-    ocl->err = clSetKernelArg(mg->ele_esq,  1, sizeof(cl_mem),            (void*)&lvl->uu);
-    ocl->err = clSetKernelArg(mg->ele_esq,  2, sizeof(cl_mem),            (void*)&lvl->aa);
-    ocl->err = clSetKernelArg(mg->ele_esq,  3, sizeof(cl_mem),            (void*)&lvl->ee);
-    
-    //err sq
-    ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->ele_esq, 3, NULL, lvl->msh.ne_sz, NULL, 0, NULL, &ocl->event);
-    float e = mg_red(ocl, mg, lvl->ee, lvl->msh.ne_tot);
-    
-    float dx3 = lvl->msh.dx*lvl->msh.dx2;
-    
-    //norms
-//    printf("nrm [%2u,%2u,%2u] %+e %+e\n", lvl->msh.le.x, lvl->msh.le.y, lvl->msh.le.z, sqrt(dx3*r), sqrt(dx3*e));
-    printf("%10d %+e %+e\n", lvl->msh.nv_tot, sqrt(dx3*r), sqrt(dx3*e));
-    
-    return;
-}
- 
- */
-
-/*
-
-//fold (max 1024ˆ3)
-float mg_red(struct ocl_obj *ocl, struct mg_obj *mg, cl_mem uu, cl_int n)
-{
-    //args
-    ocl->err = clSetKernelArg(mg->vec_sum, 0, sizeof(cl_mem), (void*)&uu);
-    ocl->err = clSetKernelArg(mg->vec_sum, 1, sizeof(cl_int), (void*)&n);
-
-    uint l = ceil(log2(n));
-    
-    //loop
-    for(int i=0; i<l; i++)
-    {
-        size_t p = pow(2,l-i-1);
-        
-//        printf("%2d %2d %u %zu\n", i, l, n, p);
-    
-        //calc
-        ocl->err = clEnqueueNDRangeKernel(ocl->command_queue, mg->vec_sum, 1, NULL, &p, NULL, 0, NULL, NULL);
-    }
-    
-    //result
-    float r;
-    
-    //read
-    ocl->err = clEnqueueReadBuffer(ocl->command_queue, uu, CL_TRUE, 0, sizeof(float), &r, 0, NULL, NULL);
-
-    return r;
-}
-
- */
+////float
+//void img_sum(struct ocl_obj *ocl, cl_mem img, struct dim_obj *dim, char* tag, int l, int f)
+//{
+//    cl_float* ptr;
+//    
+//    size_t ogn[3] = {0,0,0};
+//    size_t ele_sz;              //bytes per pixel
+//    size_t n[3];
+//    size_t rp;
+//    size_t sp;
+//    
+//    ocl->err = clGetImageInfo(img, CL_IMAGE_ELEMENT_SIZE,   sizeof(size_t), &ele_sz,    NULL);
+//    ocl->err = clGetImageInfo(img, CL_IMAGE_WIDTH,          sizeof(size_t), &n[0],      NULL);
+//    ocl->err = clGetImageInfo(img, CL_IMAGE_HEIGHT,         sizeof(size_t), &n[1],      NULL);
+//    ocl->err = clGetImageInfo(img, CL_IMAGE_DEPTH,          sizeof(size_t), &n[2],      NULL);
+//    ocl->err = clGetImageInfo(img, CL_IMAGE_ROW_PITCH,      sizeof(size_t), &rp,        NULL);
+//    ocl->err = clGetImageInfo(img, CL_IMAGE_SLICE_PITCH,    sizeof(size_t), &sp,        NULL);
+//    
+//    //buffer
+//    sprintf(file1_name, "%s/raw/%s.%02d.%03d.raw", ROOT_WRITE, tag, l, f);
+//    file1 = fopen(file1_name,"wb");
+//    ptr = clEnqueueMapImage(ocl->command_queue, img, CL_TRUE, CL_MAP_READ, ogn, dim->n, &rp, &sp, 0, NULL, NULL, NULL);
+//    fwrite(ptr, ele_sz, n[0]*n[1]*n[2], file1);
+//    clEnqueueUnmapMemObject(ocl->command_queue, img, ptr, 0, NULL, NULL);
+//    
+//    //clean up
+//    fclose(file1);
+//    
+//    return;
+//}
 
 /*
  =====================
