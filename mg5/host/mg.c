@@ -222,6 +222,12 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
         //res
         mg_res(ocl, mg, op, &mg->lvls[0]);
         
+        //sum
+        double s = img_sum(ocl, mg->lvls[0].rr, 1.0);           //sum
+        double v = 1.0/(double)mg->lvls[0].vxl.tot;             //volume
+        
+        printf("%e\n",sqrt(s*v));
+        
     } //cycle
     
     return;
@@ -261,7 +267,7 @@ double img_sum(struct ocl_obj *ocl, cl_mem img, double p)
     //sum
     for(int i=0; i<tot; i++)
     {
-        s += pow(ptr[i], p);
+        s += pow((double)ptr[i], p);
     }
     
     //unmap

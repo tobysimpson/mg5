@@ -48,7 +48,7 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){10,10,10};
+    mg.le = (cl_int3){6,6,6};
     mg.nl = mg.le.x;
     mg.dx = powf(2e0f, -mg.le.x);  //[-0.5,+0.5]
     mg.dt = 0.5f;
@@ -75,11 +75,6 @@ int main(int argc, const char * argv[])
     //ini
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, vxl_ini, 3, NULL, lvl->vxl.n, NULL, 0, NULL, NULL);
 
-    //sum
-    double s = img_sum(&ocl, lvl->uu, 1.0);           //sum
-    double v = 1.0/(double)lvl->vxl.tot;         //volume
-    
-    printf("%f %e %e \n",s, v, s/(double)lvl->vxl.tot);
     
     /*
      ====================
@@ -110,7 +105,7 @@ int main(int argc, const char * argv[])
     
 
     //mg cycle (nl,nj,nc)
-//    mg_cyc(&ocl, &mg, &mg.ops[0], mg.nl, 5, 5);
+    mg_cyc(&ocl, &mg, &mg.ops[0], mg.nl, 2, 10);
     
     
     //solve
@@ -119,38 +114,13 @@ int main(int argc, const char * argv[])
     //res
 //    mg_res(&ocl, &mg, &mg.ops[0], &mg.lvls[0]);
     
-    
-    //jac
-//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  0, sizeof(struct msh_obj),    (void*)&lvl->msh);
-//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  1, sizeof(cl_mem),            (void*)&lvl->gg);
-//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  2, sizeof(cl_mem),            (void*)&lvl->bb);
-//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  3, sizeof(cl_mem),            (void*)&lvl->uu);
-//    ocl.err = clSetKernelArg(mg.ops[0].vxl_jac,  4, sizeof(cl_mem),            (void*)&lvl->rr);
-//    
-//    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.ops[0].vxl_jac, 3, mg.ogn, lvl->vxl.n, NULL, 0, NULL, NULL);
-    
 
-
-//    //write all
-//    for(int l=0; l<mg.nl; l++)
-//    {
-//        struct lvl_obj *lvl = &mg.lvls[l];
-//
-//        //write
-//        wrt_xmf(&ocl, lvl, l, 0);
-//        wrt_img(&ocl, lvl->gg, &lvl->vxl, "gg", l, 0);
-//        wrt_img(&ocl, lvl->uu, &lvl->vxl, "uu", l, 0);
-//        wrt_img(&ocl, lvl->bb, &lvl->vxl, "bb", l, 0);
-//        wrt_img(&ocl, lvl->rr, &lvl->vxl, "rr", l, 0);
-//    }
-    
-
-//    //write fine
-//    wrt_xmf(&ocl, lvl, 0, 0);
-//    wrt_img(&ocl, lvl->gg, "gg", 0, 0);
-//    wrt_img(&ocl, lvl->uu, "uu", 0, 0);
-//    wrt_img(&ocl, lvl->bb, "bb", 0, 0);
-//    wrt_img(&ocl, lvl->rr, "rr", 0, 0);
+    //write fine
+    wrt_xmf(&ocl, lvl, 0, 0);
+    wrt_img(&ocl, lvl->gg, "gg", 0, 0);
+    wrt_img(&ocl, lvl->uu, "uu", 0, 0);
+    wrt_img(&ocl, lvl->bb, "bb", 0, 0);
+    wrt_img(&ocl, lvl->rr, "rr", 0, 0);
     
     /*
      ====================

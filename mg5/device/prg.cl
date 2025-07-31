@@ -150,7 +150,7 @@ kernel void vxl_ini(const struct msh_obj  msh,
     int4 dim = get_image_dim(gg);
     
 //   float4 x = msh.dx*(convert_float4(pos - (dim-1)/2) + 0.5f); //origin at centre
-//   float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
+   float4 u = 0e0f + (pos.x==0) - (pos.x==(dim.x-1));  //init
     
     //dirichlet
     float g = utl_bdr(pos, dim);
@@ -158,7 +158,7 @@ kernel void vxl_ini(const struct msh_obj  msh,
 //    float g = (pos.x==0);
     
     write_imagef(gg, pos, g);
-    write_imagef(uu, pos, 1.0f);
+    write_imagef(uu, pos, u);
     write_imagef(bb, pos, 0.0f);
     write_imagef(rr, pos, 0.0f);
 
