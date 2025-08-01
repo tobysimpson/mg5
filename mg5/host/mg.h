@@ -28,6 +28,9 @@ struct dim_obj
     size_t  n[3];   //all
     size_t  i[3];   //interior
     size_t  tot;    //total
+        
+//    size_t rp;      //row pitch
+//    size_t sp;      //slice pitch
 };
 
 //object

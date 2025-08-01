@@ -45,13 +45,11 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
         
         lvl->vxl.tot = lvl->vxl.n[0]*lvl->vxl.n[1]*lvl->vxl.n[2];
         
-        //dx
-        lvl->msh.dx = mg->dx*powf(2e0f,l);
-        lvl->msh.dt = mg->dt;
-        
         //mesh
-        lvl->msh.dx2        = lvl->msh.dx*lvl->msh.dx;
-        lvl->msh.rdx2       = 1e0f/lvl->msh.dx2;
+        lvl->msh.dx     = mg->dx*powf(2e0f,l);
+        lvl->msh.dt     = mg->dt;
+        lvl->msh.dx2    = lvl->msh.dx*lvl->msh.dx;
+        lvl->msh.rdx2   = 1e0f/lvl->msh.dx2;
         
         printf("lvl %d [%2d,%2d,%2d] [%4zu,%4zu,%4zu] %10zu %f %f\n", l,
                lvl->le.x,
@@ -82,6 +80,7 @@ void mg_ini(struct ocl_obj *ocl, struct mg_obj *mg)
     //poisson
     mg->ops[0].vxl_res = clCreateKernel(ocl->program, "vxl_res", &ocl->err);
     mg->ops[0].vxl_jac = clCreateKernel(ocl->program, "vxl_jac", &ocl->err);
+    mg->ops[0].vxl_fwd = clCreateKernel(ocl->program, "vxl_fwd", &ocl->err);
     
     //origin
     mg->ogn[0] = 0;
@@ -223,7 +222,7 @@ void mg_cyc(struct ocl_obj *ocl, struct mg_obj *mg, struct op_obj *op, int nl, i
         mg_res(ocl, mg, op, &mg->lvls[0]);
         
         //sum
-        double s = img_sum(ocl, mg->lvls[0].rr, 1.0);           //sum
+        double s = img_sum(ocl, mg->lvls[0].rr, 2.0);           //sum
         double v = 1.0/(double)mg->lvls[0].vxl.tot;             //volume
         
         printf("%e\n",sqrt(s*v));
@@ -247,6 +246,7 @@ double img_sum(struct ocl_obj *ocl, cl_mem img, double p)
     
     size_t ogn[3] = {0,0,0};
     size_t dim[3];
+    size_t tot;
     size_t rp;
     size_t sp;
     
@@ -256,7 +256,7 @@ double img_sum(struct ocl_obj *ocl, cl_mem img, double p)
     ocl->err = clGetImageInfo(img, CL_IMAGE_ROW_PITCH,      sizeof(size_t), &rp,        NULL);
     ocl->err = clGetImageInfo(img, CL_IMAGE_SLICE_PITCH,    sizeof(size_t), &sp,        NULL);
     
-    size_t tot = dim[0]*dim[1]*dim[2];
+    tot = dim[0]*dim[1]*dim[2];
     
     //map
     ptr = clEnqueueMapImage(ocl->command_queue, img, CL_TRUE, CL_MAP_READ, ogn, dim, &rp, &sp, 0, NULL, NULL, NULL);

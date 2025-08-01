@@ -21,7 +21,7 @@
 #include "io.h"
 
 
-//multigrid voxel/image
+//multigrid voxel/images
 int main(int argc, const char * argv[])
 {
     printf("hello\n");
@@ -48,9 +48,9 @@ int main(int argc, const char * argv[])
     
     //multigrid
     struct mg_obj mg;
-    mg.le = (cl_int3){6,6,6};
+    mg.le = (cl_int3){8,8,8};
     mg.nl = mg.le.x;
-    mg.dx = powf(2e0f, -mg.le.x);  //[-0.5,+0.5]
+    mg.dx = 1.0f/(powf(2e0f, mg.le.x) + 1.0f);  //[-0.5,+0.5] voxels
     mg.dt = 0.5f;
     mg_ini(&ocl, &mg);
     
@@ -75,6 +75,13 @@ int main(int argc, const char * argv[])
     //ini
     ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, vxl_ini, 3, NULL, lvl->vxl.n, NULL, 0, NULL, NULL);
 
+    //rhs
+    ocl.err = clSetKernelArg(mg.ops[0].vxl_fwd, 0, sizeof(struct msh_obj), &lvl->msh);
+    ocl.err = clSetKernelArg(mg.ops[0].vxl_fwd, 1, sizeof(cl_mem)        , &lvl->gg);
+    ocl.err = clSetKernelArg(mg.ops[0].vxl_fwd, 2, sizeof(cl_mem)        , &lvl->bb);
+    ocl.err = clSetKernelArg(mg.ops[0].vxl_fwd, 3, sizeof(cl_mem)        , &lvl->uu);
+    
+//    ocl.err = clEnqueueNDRangeKernel(ocl.command_queue, mg.ops[0].vxl_fwd, 3, mg.ogn, lvl->vxl.n, NULL, 0, NULL, NULL);
     
     /*
      ====================
@@ -82,7 +89,7 @@ int main(int argc, const char * argv[])
      ====================
      */
     
-    //project
+    //geom project
     for(int l=0; l<(mg.nl-1); l++)
     {
         //levels
@@ -105,15 +112,9 @@ int main(int argc, const char * argv[])
     
 
     //mg cycle (nl,nj,nc)
-    mg_cyc(&ocl, &mg, &mg.ops[0], mg.nl, 2, 10);
+    mg_cyc(&ocl, &mg, &mg.ops[0], mg.nl, 5, 10);
     
-    
-    //solve
-//    mg_jac(&ocl, &mg, &mg.ops[0], &mg.lvls[0], 10);
-    
-    //res
-//    mg_res(&ocl, &mg, &mg.ops[0], &mg.lvls[0]);
-    
+
 
     //write fine
     wrt_xmf(&ocl, lvl, 0, 0);
