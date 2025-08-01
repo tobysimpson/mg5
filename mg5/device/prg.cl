@@ -36,9 +36,6 @@ struct msh_obj
  ============================
  */
 
-
-constant int4 off_fac[6] = {{-1,0,0,0},{+1,0,0,0},{0,-1,0,0},{0,+1,0,0},{0,0,-1,0},{0,0,+1,0}};
-
 //global index
 int utl_idx(int4 pos, int4 dim)
 {
@@ -63,6 +60,9 @@ int utl_bdr(int4 pos, int4 dim)
  stencil
  ============================
  */
+
+constant int4 off_fac[6] = {{-1,0,0,0},{+1,0,0,0},{0,-1,0,0},{0,+1,0,0},{0,0,-1,0},{0,0,+1,0}};
+
 
 //stencil 6-point laplacian zero neumann wrt domain
 void stl_lap(read_only image3d_t uu, int4 pos, int4 dim, float4 *s, float *d)
@@ -174,7 +174,7 @@ kernel void vxl_jac(const struct msh_obj  msh,
         stl_lap(uu, pos, dim, &s, &d);
 
         //update, damp
-        u.x += 0.89f*(msh.dx2*b.x - (s.x + d*u.x))/d;
+        u += 0.9f*(msh.dx2*b - (s + d*u))/d;
     }
     
     //write
@@ -211,7 +211,7 @@ kernel void vxl_res(const struct msh_obj  msh,
         stl_lap(uu, pos, dim, &s, &d);
         
         //res
-        r = b.x - msh.rdx2*(s + d*u.x);
+        r = b - msh.rdx2*(s + d*u);
     }
     
     //write
@@ -244,11 +244,11 @@ kernel void vxl_fwd(const struct msh_obj  msh,
         //stencil
         stl_lap(uu, pos, dim, &s, &d);
         
-        b = msh.rdx2*(s + d*u.x);
+        b = msh.rdx2*(s + d*u);
     }
     
     //write
-    write_imagef(bb, pos, d);
+    write_imagef(bb, pos, b);
     
     return;
 }
